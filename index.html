@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<!--
+  School Design Thinking — Card Shuffler
+  © 2025 Robbe Wulgaert · AI in de Klas · aiindeklas.be
+-->
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Design Thinking — Kaarten Schudden</title>
+  <style>
+    :root{
+      --brand-purple:#5200ff;
+      --brand-green:#00ff99;
+      --ink:#1A224C;
+      --bg:#ffffff;
+      --panel:#f6f3ff;
+      --line:rgba(26,34,76,.14);
+      --shadow:0 10px 30px rgba(26,34,76,.10);
+      --shadow2:0 6px 18px rgba(26,34,76,.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+      text-align:center;
+      padding:22px 16px 40px;
+    }
+    h1{
+      margin:10px 0 8px;
+      color:var(--brand-purple);
+      font-size:clamp(22px,3vw,32px);
+      letter-spacing:.2px;
+    }
+    .sub{
+      max-width:980px;
+      margin:0 auto 18px;
+      color:rgba(26,34,76,.78);
+      line-height:1.35;
+      font-size:15px;
+    }
+    .wrap{max-width:1100px;margin:0 auto}
+    .status{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      border-radius:12px;
+      box-shadow:0 2px 10px rgba(26,34,76,.06);
+      margin:6px auto 18px;
+      text-align:left;
+      max-width:980px;
+      width:100%;
+    }
+    .status strong{color:var(--ink)}
+    .status .dot{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--brand-green);
+      box-shadow:0 0 0 4px rgba(0,255,153,.15);
+      flex:0 0 auto;
+    }
+    .status.locked .dot{
+      background:#ff3b30;
+      box-shadow:0 0 0 4px rgba(255,59,48,.14);
+    }
+    .controls{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin:10px 0 18px;
+    }
+    .button{
+      padding:10px 16px;
+      border-radius:10px;
+      border:none;
+      cursor:pointer;
+      background:var(--brand-purple);
+      color:#fff;
+      font-weight:700;
+      font-size:14px;
+      box-shadow:0 8px 18px rgba(82,0,255,.15);
+      transition:transform .15s, filter .15s, opacity .15s;
+    }
+    .button:hover{transform:translateY(-1px); filter:brightness(1.02)}
+    .button:active{transform:translateY(0px); filter:brightness(.98)}
+    .button.secondary{
+      background:#fff;
+      color:var(--brand-purple);
+      border:2px solid var(--brand-purple);
+      box-shadow:0 8px 18px rgba(26,34,76,.08);
+    }
+    .button.danger{
+      background:#ff3b30;
+      box-shadow:0 8px 18px rgba(255,59,48,.14);
+    }
+    .button[disabled]{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none;
+      filter:none;
+    }
+
+    .grid{
+      display:grid;
+      gap:18px;
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
+      align-items:start;
+      margin-top:6px;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns: 1fr}
+    }
+
+    .cardSlot{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px 12px 14px;
+      box-shadow:var(--shadow2);
+      position:relative;
+      overflow:hidden;
+    }
+    .slotTitle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin:2px 2px 10px;
+      padding-bottom:8px;
+      border-bottom:1px solid rgba(26,34,76,.10);
+    }
+    .slotTitle .label{
+      font-weight:900;
+      color:var(--ink);
+      letter-spacing:.2px;
+    }
+    .slotTitle .tag{
+      font-size:12px;
+      padding:5px 9px;
+      border-radius:999px;
+      border:1px solid rgba(82,0,255,.18);
+      background:rgba(82,0,255,.06);
+      color:var(--brand-purple);
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .cardFrame{
+      width:100%;
+      aspect-ratio: 640 / 896;
+      border-radius:12px;
+      overflow:hidden;
+      border:2px solid rgba(82,0,255,.22);
+      background:linear-gradient(180deg, rgba(0,255,153,.14), rgba(82,0,255,.06));
+      position:relative;
+      box-shadow:0 10px 30px rgba(26,34,76,.10) inset;
+      user-select:none;
+    }
+    .cardFrame img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    .shuffling .cardFrame{
+      border-color:rgba(82,0,255,.38);
+      box-shadow:0 0 0 4px rgba(82,0,255,.10), 0 20px 50px rgba(26,34,76,.12);
+    }
+    .shuffling .cardFrame img{
+      animation: riffle .55s linear infinite;
+      filter:saturate(1.1) contrast(1.05);
+    }
+    @keyframes riffle{
+      0%   {transform:translateY(0) rotate(-.35deg) scale(1.01)}
+      50%  {transform:translateY(-4px) rotate(.35deg) scale(1.02)}
+      100% {transform:translateY(0) rotate(-.35deg) scale(1.01)}
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(15,18,32,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      z-index:9999;
+    }
+    .overlay.open{display:flex}
+    .modal{
+      width:min(760px, 100%);
+      background:#fff;
+      border-radius:18px;
+      border:1px solid rgba(26,34,76,.14);
+      box-shadow:0 24px 70px rgba(0,0,0,.25);
+      overflow:hidden;
+      text-align:left;
+    }
+    .modalHeader{
+      padding:16px 18px;
+      background:linear-gradient(90deg, rgba(82,0,255,.10), rgba(0,255,153,.10));
+      border-bottom:1px solid rgba(26,34,76,.12);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .modalHeader .title{
+      margin:0;
+      font-size:16px;
+      font-weight:900;
+      color:var(--ink);
+    }
+    .modalBody{padding:16px 18px}
+    .modalBody p{margin:0 0 10px; color:rgba(26,34,76,.80); line-height:1.35}
+    .modalFooter{
+      padding:14px 18px;
+      border-top:1px solid rgba(26,34,76,.12);
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      background:#faf9ff;
+    }
+    .fieldRow{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    label{
+      font-size:12px;
+      font-weight:800;
+      color:rgba(26,34,76,.82);
+      display:block;
+      margin-bottom:6px;
+    }
+    input{
+      width:100%;
+      padding:11px 12px;
+      border-radius:12px;
+      border:1px solid rgba(26,34,76,.18);
+      outline:none;
+      font-size:14px;
+      background:#fff;
+    }
+    input:focus{
+      border-color:rgba(82,0,255,.55);
+      box-shadow:0 0 0 4px rgba(82,0,255,.12);
+    }
+    .smallNote{
+      font-size:12px;
+      color:rgba(26,34,76,.70);
+      margin-top:8px;
+    }
+
+    .thumbs{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin-top:12px;
+    }
+    @media (max-width: 820px){
+      .thumbs{grid-template-columns:1fr}
+    }
+    .thumb{
+      border:1px solid rgba(26,34,76,.12);
+      border-radius:12px;
+      overflow:hidden;
+      background:#fff;
+      box-shadow:0 6px 14px rgba(26,34,76,.10);
+    }
+    .thumb .cap{
+      padding:8px 10px;
+      font-weight:900;
+      font-size:12px;
+      color:rgba(26,34,76,.82);
+      border-bottom:1px solid rgba(26,34,76,.10);
+      background:rgba(82,0,255,.05);
+    }
+    .thumb img{
+      width:100%;
+      aspect-ratio: 640 / 896;
+      object-fit:cover;
+      display:block;
+    }
+
+    footer{
+      margin-top:26px;
+      font-size:12px;
+      color:rgba(26,34,76,.62);
+    }
+
+    .noSelect, .noSelect *{ user-select:none; -webkit-user-select:none; }
+  </style>
+</head>
+<body class="noSelect">
+  <div class="wrap">
+    <h1>Design Thinking — Kaarten Schudden</h1>
+    <div class="sub">
+      Vul je naam in. Daarna krijg je 3 kaarten: <strong>PERSONA</strong>, <strong>LOCATIE</strong> en <strong>MODIFIER</strong>.
+      De keuze wordt opgeslagen zodat je niet eindeloos kan herrollen.
+    </div>
+
+    <div id="statusBar" class="status">
+      <span class="dot" aria-hidden="true"></span>
+      <div>
+        <div><strong id="statusTitle">Klaar om te starten</strong></div>
+        <div id="statusText" style="font-size:12px;color:rgba(26,34,76,.74);margin-top:2px;">Vul je naam in om kaarten te trekken.</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="startBtn" class="button">Start & trek kaarten</button>
+      <button id="downloadBtn" class="button secondary" disabled>Download kaarten (PNG)</button>
+      <button id="adminBtn" class="button secondary">Herrol vrijgeven (wachtwoord)</button>
+    </div>
+
+    <div class="grid" aria-live="polite">
+      <div class="cardSlot" id="slot-persona">
+        <div class="slotTitle">
+          <div class="label">PERSONA</div>
+          <div class="tag">Deck 1</div>
+        </div>
+        <div class="cardFrame"><img id="img-persona" alt="PERSONA kaart" src="" /></div>
+      </div>
+
+      <div class="cardSlot" id="slot-locatie">
+        <div class="slotTitle">
+          <div class="label">LOCATIE</div>
+          <div class="tag">Deck 2</div>
+        </div>
+        <div class="cardFrame"><img id="img-locatie" alt="LOCATIE kaart" src="" /></div>
+      </div>
+
+      <div class="cardSlot" id="slot-modifier">
+        <div class="slotTitle">
+          <div class="label">MODIFIER</div>
+          <div class="tag">Deck 3</div>
+        </div>
+        <div class="cardFrame"><img id="img-modifier" alt="MODIFIER kaart" src="" /></div>
+      </div>
+    </div>
+
+    <footer>
+      © 2025 Robbe Wulgaert · AI in de Klas · aiindeklas.be — Vrij te gebruiken voor educatie
+    </footer>
+  </div>
+
+  <!-- Modal: name entry -->
+  <div id="modalNames" class="overlay" role="dialog" aria-modal="true" aria-labelledby="modalNamesTitle">
+    <div class="modal">
+      <div class="modalHeader">
+        <h2 class="title" id="modalNamesTitle">Wie speelt er mee?</h2>
+      </div>
+      <div class="modalBody">
+        <p>Vul je naam in. Voeg buddy’s toe als je samenwerkt.</p>
+
+        <div class="fieldRow">
+          <div>
+            <label for="studentName">Jouw naam</label>
+            <input id="studentName" type="text" autocomplete="off" inputmode="text" />
+          </div>
+          <div>
+            <label for="buddyNames">Buddy(’s) (optioneel)</label>
+            <input id="buddyNames" type="text" autocomplete="off" placeholder="bv. Alex + Sam" inputmode="text" />
+            <div class="smallNote">Meerdere buddy’s: gebruik een <strong>+</strong> tussen de namen.</div>
+          </div>
+        </div>
+
+        <div class="smallNote">De tool bewaart je trekbeurt op dit toestel (localStorage).</div>
+      </div>
+      <div class="modalFooter">
+        <button id="namesCancel" class="button secondary">Annuleer</button>
+        <button id="namesOk" class="button">Trek kaarten</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: password -->
+  <div id="modalAdmin" class="overlay" role="dialog" aria-modal="true" aria-labelledby="modalAdminTitle">
+    <div class="modal">
+      <div class="modalHeader">
+        <h2 class="title" id="modalAdminTitle">Herrol vrijgeven</h2>
+      </div>
+      <div class="modalBody">
+        <p>Voer het wachtwoord in om de huidige trekbeurt te verwijderen en opnieuw te mogen rollen.</p>
+        <div class="fieldRow">
+          <div>
+            <label for="adminPass">Wachtwoord</label>
+            <input id="adminPass" type="password" autocomplete="off" />
+          </div>
+        </div>
+      </div>
+      <div class="modalFooter">
+        <button id="adminCancel" class="button secondary">Annuleer</button>
+        <button id="adminOk" class="button danger">Vrijgeven</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: download -->
+  <div id="modalDownload" class="overlay" role="dialog" aria-modal="true" aria-labelledby="modalDownloadTitle">
+    <div class="modal">
+      <div class="modalHeader">
+        <h2 class="title" id="modalDownloadTitle">Download je kaarten (PNG)</h2>
+      </div>
+      <div class="modalBody">
+        <p>Je downloadt je 3 gekozen kaarten als PNG-bestanden.</p>
+        <div class="thumbs">
+          <div class="thumb">
+            <div class="cap">PERSONA</div>
+            <img id="thumb-persona" alt="Preview PERSONA" />
+          </div>
+          <div class="thumb">
+            <div class="cap">LOCATIE</div>
+            <img id="thumb-locatie" alt="Preview LOCATIE" />
+          </div>
+          <div class="thumb">
+            <div class="cap">MODIFIER</div>
+            <img id="thumb-modifier" alt="Preview MODIFIER" />
+          </div>
+        </div>
+        
+      <div class="modalFooter">
+        <button id="dlClose" class="button secondary">Sluiten</button>
+        <button id="dlThree" class="button">Download 3 PNG’s</button>
+        <button id="dlOne" class="button secondary">Download 1 PNG (3 naast elkaar)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================
+       CONFIG — deck bestanden
+       =========================
+       Verwacht SVG-bestanden in ./SVG/ naast index.html.
+
+       Bestandsnamen (met spaties):
+         PERSONA 1.svg, PERSONA 2.svg, ...
+         LOCATIE 1.svg, LOCATIE 2.svg, ...
+         MODIFIER 1.svg, MODIFIER 2.svg, ...
+
+       Pas COUNTs aan aan jouw mapinhoud.
+    */
+    const STORAGE_KEY = "dt_card_pick_v2";
+    const ADMIN_PASSWORD = "Accenture";
+
+    const DECKS = [
+      { id: "persona",  label: "PERSONA",  prefix: "PERSONA",  count: 5  },
+      { id: "locatie",  label: "LOCATIE",  prefix: "LOCATIE",  count: 3  },
+      { id: "modifier", label: "MODIFIER", prefix: "MODIFIER", count: 10 }
+    ];
+
+    /* =========================
+       Helpers
+       ========================= */
+    function filePath(prefix, idx1based){
+      const fileName = `${prefix} ${idx1based}.svg`;
+      return `./SVG/${encodeURIComponent(fileName)}`;
+    }
+
+    function cryptoRandInt(maxExclusive){
+      if (window.crypto && crypto.getRandomValues) {
+        const buf = new Uint32Array(1);
+        window.crypto.getRandomValues(buf);
+        return buf[0] % maxExclusive;
+      }
+      return Math.floor(Math.random() * maxExclusive);
+    }
+
+    function parseParticipants(main, buddiesRaw){
+      const clean = (s) => s.trim().replace(/\s+/g, " ");
+      const out = [];
+      const m = clean(main || "");
+      if (m) out.push(m);
+      const b = clean(buddiesRaw || "");
+      if (b) b.split("+").map(clean).filter(Boolean).forEach(x => out.push(x));
+      const seen = new Set();
+      return out.filter(n => {
+        const key = n.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function slug(s){
+      return (s || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60) || "leerling";
+    }
+
+    function openModal(id){
+      const el = document.getElementById(id);
+      el.classList.add("open");
+      const input = el.querySelector("input");
+      if (input) setTimeout(() => input.focus(), 0);
+    }
+    function closeModal(id){
+      document.getElementById(id).classList.remove("open");
+    }
+
+    function setStatus(locked, title, text){
+      const bar = document.getElementById("statusBar");
+      bar.classList.toggle("locked", !!locked);
+      document.getElementById("statusTitle").textContent = title;
+      document.getElementById("statusText").textContent = text;
+    }
+
+    function getSavedPick(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return null;
+        return JSON.parse(raw);
+      }catch(e){
+        return null;
+      }
+    }
+    function savePick(obj){ localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }
+    function clearPick(){ localStorage.removeItem(STORAGE_KEY); }
+
+    function applyPickToUI(pick){
+      for (const d of DECKS){
+        document.getElementById(`img-${d.id}`).src = pick.picks[d.id].src;
+      }
+    }
+
+    function setControlsLocked(isLocked){
+      document.getElementById("startBtn").disabled = isLocked;
+      document.getElementById("downloadBtn").disabled = !isLocked; // enkel als er een vaste pick is
+    }
+
+    /* =========================
+       Shuffle animation + pick
+       ========================= */
+    async function animateAndPick(participants){
+      for (const d of DECKS){
+        document.getElementById(`slot-${d.id}`).classList.add("shuffling");
+      }
+
+      const start = performance.now();
+      const DURATION = 1400;
+      let raf = null;
+
+      const cycle = () => {
+        const now = performance.now();
+        const t = now - start;
+
+        for (const d of DECKS){
+          const img = document.getElementById(`img-${d.id}`);
+          const idx = 1 + cryptoRandInt(d.count);
+          img.src = filePath(d.prefix, idx);
+        }
+
+        if (t < DURATION) raf = requestAnimationFrame(cycle);
+      };
+      raf = requestAnimationFrame(cycle);
+
+      await new Promise(res => setTimeout(res, DURATION + 120));
+      if (raf) cancelAnimationFrame(raf);
+
+      const picks = {};
+      for (const d of DECKS){
+        const idx1 = 1 + cryptoRandInt(d.count);
+        picks[d.id] = { index: idx1, src: filePath(d.prefix, idx1), label: d.label };
+      }
+
+      for (const d of DECKS){
+        document.getElementById(`slot-${d.id}`).classList.remove("shuffling");
+      }
+
+      const pickObj = {
+        version: 2,
+        when: new Date().toISOString(),
+        participants,
+        picks
+      };
+
+      applyPickToUI(pickObj);
+      savePick(pickObj);
+
+      setControlsLocked(true);
+      setStatus(true, "Kaarten vastgezet", `Trekbeurt opgeslagen voor: ${participants.join(" + ")}`);
+    }
+
+    /* =========================
+       SVG -> PNG export
+       ========================= */
+    function parseSvgSize(svgText){
+      // fallback to card ratio
+      const fallback = { w: 640, h: 896 };
+
+      try{
+        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+        const svg = doc.documentElement;
+        if (!svg) return fallback;
+
+        const wAttr = svg.getAttribute("width");
+        const hAttr = svg.getAttribute("height");
+
+        const toNum = (v) => {
+          if (!v) return null;
+          const m = String(v).match(/[\d.]+/);
+          return m ? Number(m[0]) : null;
+        };
+
+        const w = toNum(wAttr);
+        const h = toNum(hAttr);
+        if (w && h) return { w: Math.round(w), h: Math.round(h) };
+
+        const vb = svg.getAttribute("viewBox");
+        if (vb){
+          const parts = vb.split(/[,\s]+/).map(Number).filter(n => !Number.isNaN(n));
+          if (parts.length === 4){
+            const vw = parts[2], vh = parts[3];
+            if (vw > 0 && vh > 0) return { w: Math.round(vw), h: Math.round(vh) };
+          }
+        }
+        return fallback;
+      }catch{
+        return fallback;
+      }
+    }
+
+    async function svgPathToPngBlob(svgPath){
+      const res = await fetch(svgPath, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Kan SVG niet laden: ${svgPath}`);
+      const svgText = await res.text();
+
+      const size = parseSvgSize(svgText);
+
+      const blob = new Blob([svgText], { type: "image/svg+xml" });
+      const url = URL.createObjectURL(blob);
+
+      try{
+        const img = new Image();
+        img.decoding = "async";
+
+        const loaded = new Promise((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("SVG render fout"));
+        });
+
+        img.src = url;
+        await loaded;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = size.w;
+        canvas.height = size.h;
+
+        const ctx = canvas.getContext("2d", { alpha: false });
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png", 0.92));
+        if (!pngBlob) throw new Error("PNG export fout");
+
+        return { blob: pngBlob, w: canvas.width, h: canvas.height };
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    function triggerDownloadBlob(blob, filename){
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function downloadThreePngs(saved){
+      const base = slug(saved.participants.join("-"));
+      for (const d of DECKS){
+        const { blob } = await svgPathToPngBlob(saved.picks[d.id].src);
+        const fn = `design-thinking_${base}_${d.label}_${saved.picks[d.id].index}.png`;
+        triggerDownloadBlob(blob, fn);
+      }
+    }
+
+    async function downloadCombinedPng(saved){
+      const base = slug(saved.participants.join("-"));
+
+      const a = await svgPathToPngBlob(saved.picks.persona.src);
+      const b = await svgPathToPngBlob(saved.picks.locatie.src);
+      const c = await svgPathToPngBlob(saved.picks.modifier.src);
+
+      const gap = 24;
+      const targetH = Math.max(a.h, b.h, c.h);
+      const targetW = a.w + b.w + c.w + gap * 4;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = targetW;
+      canvas.height = targetH + gap * 2;
+
+      const ctx = canvas.getContext("2d", { alpha: false });
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // load the PNG blobs back into images for draw (fast + consistent)
+      async function blobToImage(blob){
+        const url = URL.createObjectURL(blob);
+        try{
+          const img = new Image();
+          img.decoding = "async";
+          await new Promise((res, rej) => {
+            img.onload = res;
+            img.onerror = rej;
+            img.src = url;
+          });
+          return img;
+        } finally {
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+      }
+
+      const imgA = await blobToImage(a.blob);
+      const imgB = await blobToImage(b.blob);
+      const imgC = await blobToImage(c.blob);
+
+      let x = gap;
+      const y = gap;
+      ctx.drawImage(imgA, x, y, a.w, a.h); x += a.w + gap;
+      ctx.drawImage(imgB, x, y, b.w, b.h); x += b.w + gap;
+      ctx.drawImage(imgC, x, y, c.w, c.h);
+
+      const outBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png", 0.92));
+      const fn = `design-thinking_${base}_3kaarten.png`;
+      triggerDownloadBlob(outBlob, fn);
+    }
+
+    function syncDownloadThumbs(saved){
+      document.getElementById("thumb-persona").src = saved.picks.persona.src;
+      document.getElementById("thumb-locatie").src = saved.picks.locatie.src;
+      document.getElementById("thumb-modifier").src = saved.picks.modifier.src;
+    }
+
+    /* =========================
+       Boot
+       ========================= */
+    function boot(){
+      const saved = getSavedPick();
+
+      if (saved && saved.picks && saved.participants){
+        applyPickToUI(saved);
+        setControlsLocked(true);
+        setStatus(true, "Kaarten vastgezet", `Trekbeurt opgeslagen voor: ${saved.participants.join(" + ")}`);
+      } else {
+        for (const d of DECKS){
+          document.getElementById(`img-${d.id}`).src = filePath(d.prefix, 1);
+        }
+        setControlsLocked(false);
+        setStatus(false, "Klaar om te starten", "Vul je naam in om kaarten te trekken.");
+      }
+
+      document.getElementById("startBtn").addEventListener("click", () => {
+        if (getSavedPick()) return;
+        openModal("modalNames");
+      });
+
+      document.getElementById("namesCancel").addEventListener("click", () => closeModal("modalNames"));
+
+      document.getElementById("namesOk").addEventListener("click", async () => {
+        const name = document.getElementById("studentName").value || "";
+        const buddies = document.getElementById("buddyNames").value || "";
+        const participants = parseParticipants(name, buddies);
+
+        closeModal("modalNames");
+
+        if (participants.length === 0){
+          setStatus(false, "Naam ontbreekt", "Vul minstens je eigen naam in.");
+          return;
+        }
+
+        setStatus(false, "Kaarten worden geschud…", `Voor: ${participants.join(" + ")}`);
+        setControlsLocked(true);
+
+        try{
+          await animateAndPick(participants);
+        } catch (e){
+          setControlsLocked(false);
+          setStatus(false, "Fout bij schudden", "Kaarten konden niet geladen worden. Controleer de SVG-bestanden.");
+        }
+      });
+
+      document.getElementById("adminBtn").addEventListener("click", () => openModal("modalAdmin"));
+      document.getElementById("adminCancel").addEventListener("click", () => {
+        document.getElementById("adminPass").value = "";
+        closeModal("modalAdmin");
+      });
+
+      document.getElementById("adminOk").addEventListener("click", () => {
+        const pass = document.getElementById("adminPass").value || "";
+        document.getElementById("adminPass").value = "";
+        closeModal("modalAdmin");
+
+        if (pass !== ADMIN_PASSWORD){
+          setStatus(true, "Wachtwoord fout", "Herrol is niet vrijgegeven.");
+          return;
+        }
+
+        clearPick();
+        for (const d of DECKS){
+          document.getElementById(`img-${d.id}`).src = filePath(d.prefix, 1);
+        }
+        setControlsLocked(false);
+        setStatus(false, "Herrol vrijgegeven", "Je kan opnieuw kaarten trekken.");
+      });
+
+      // Download modal
+      document.getElementById("downloadBtn").addEventListener("click", () => {
+        const s = getSavedPick();
+        if (!s) return;
+        syncDownloadThumbs(s);
+        openModal("modalDownload");
+      });
+
+      document.getElementById("dlClose").addEventListener("click", () => closeModal("modalDownload"));
+
+      document.getElementById("dlThree").addEventListener("click", async () => {
+        const s = getSavedPick();
+        if (!s) return;
+
+        setStatus(true, "Download bezig…", "PNG-export wordt voorbereid.");
+        try{
+          await downloadThreePngs(s);
+          setStatus(true, "Download klaar", "Je kaarten zijn gedownload als PNG.");
+          closeModal("modalDownload");
+        } catch (e){
+          setStatus(true, "Download fout", "PNG-export faalde. Controleer of de SVG’s bereikbaar zijn.");
+        }
+      });
+
+      document.getElementById("dlOne").addEventListener("click", async () => {
+        const s = getSavedPick();
+        if (!s) return;
+
+        setStatus(true, "Download bezig…", "Gecombineerde PNG wordt voorbereid.");
+        try{
+          await downloadCombinedPng(s);
+          setStatus(true, "Download klaar", "Gecombineerde kaart is gedownload als PNG.");
+          closeModal("modalDownload");
+        } catch (e){
+          setStatus(true, "Download fout", "PNG-export faalde. Controleer of de SVG’s bereikbaar zijn.");
+        }
+      });
+
+      // SEB-light hardening
+      document.addEventListener("contextmenu", (e) => e.preventDefault());
+      document.addEventListener("dragstart", (e) => e.preventDefault());
+    }
+
+    window.addEventListener("load", boot);
+  </script>
+</body>
+</html>
