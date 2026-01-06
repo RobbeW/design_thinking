@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <!--
-  School Design Thinking — Card Shuffler
-  © 2025 Robbe Wulgaert · AI in de Klas · aiindeklas.be
+  School Design Thinking — Card Shuffler (Demo + Klasmodus)
+  © 2026 Robbe Wulgaert · AI in de Klas · aiindeklas.be
+  Vrij te gebruiken voor educatie mits expliciete naamsvermelding
 -->
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#5200ff" />
   <title>Design Thinking — Kaarten Schudden</title>
+
   <style>
     :root{
       --brand-purple:#5200ff;
@@ -18,7 +21,9 @@
       --line:rgba(26,34,76,.14);
       --shadow:0 10px 30px rgba(26,34,76,.10);
       --shadow2:0 6px 18px rgba(26,34,76,.12);
+      --danger:#ff3b30;
     }
+
     *{box-sizing:border-box}
     body{
       margin:0;
@@ -28,20 +33,24 @@
       text-align:center;
       padding:22px 16px 40px;
     }
+
     h1{
       margin:10px 0 8px;
       color:var(--brand-purple);
       font-size:clamp(22px,3vw,32px);
       letter-spacing:.2px;
     }
+
+    .wrap{max-width:1200px;margin:0 auto}
+
     .sub{
       max-width:980px;
-      margin:0 auto 18px;
+      margin:0 auto 14px;
       color:rgba(26,34,76,.78);
       line-height:1.35;
       font-size:15px;
     }
-    .wrap{max-width:1100px;margin:0 auto}
+
     .status{
       display:inline-flex;
       align-items:center;
@@ -51,7 +60,7 @@
       background:var(--panel);
       border-radius:12px;
       box-shadow:0 2px 10px rgba(26,34,76,.06);
-      margin:6px auto 18px;
+      margin:6px auto 16px;
       text-align:left;
       max-width:980px;
       width:100%;
@@ -64,9 +73,10 @@
       flex:0 0 auto;
     }
     .status.locked .dot{
-      background:#ff3b30;
+      background:var(--danger);
       box-shadow:0 0 0 4px rgba(255,59,48,.14);
     }
+
     .controls{
       display:flex;
       gap:10px;
@@ -74,6 +84,7 @@
       flex-wrap:wrap;
       margin:10px 0 18px;
     }
+
     .button{
       padding:10px 16px;
       border-radius:10px;
@@ -81,7 +92,7 @@
       cursor:pointer;
       background:var(--brand-purple);
       color:#fff;
-      font-weight:700;
+      font-weight:800;
       font-size:14px;
       box-shadow:0 8px 18px rgba(82,0,255,.15);
       transition:transform .15s, filter .15s, opacity .15s;
@@ -95,7 +106,7 @@
       box-shadow:0 8px 18px rgba(26,34,76,.08);
     }
     .button.danger{
-      background:#ff3b30;
+      background:var(--danger);
       box-shadow:0 8px 18px rgba(255,59,48,.14);
     }
     .button[disabled]{
@@ -105,7 +116,19 @@
       filter:none;
     }
 
-    .grid{
+    .divider{
+      height:1px;
+      background:rgba(26,34,76,.10);
+      max-width:980px;
+      margin:18px auto;
+    }
+
+    /* Views */
+    .view{display:none}
+    .view.active{display:block}
+
+    /* Demo (big cards) */
+    .grid-big{
       display:grid;
       gap:18px;
       grid-template-columns: repeat(3, minmax(220px, 1fr));
@@ -113,9 +136,8 @@
       margin-top:6px;
     }
     @media (max-width: 980px){
-      .grid{grid-template-columns: 1fr}
+      .grid-big{grid-template-columns: 1fr}
     }
-
     .cardSlot{
       background:#fff;
       border:1px solid var(--line);
@@ -124,6 +146,7 @@
       box-shadow:var(--shadow2);
       position:relative;
       overflow:hidden;
+      text-align:left;
     }
     .slotTitle{
       display:flex;
@@ -146,7 +169,7 @@
       border:1px solid rgba(82,0,255,.18);
       background:rgba(82,0,255,.06);
       color:var(--brand-purple);
-      font-weight:800;
+      font-weight:900;
       white-space:nowrap;
     }
     .cardFrame{
@@ -168,7 +191,6 @@
       user-select:none;
       -webkit-user-drag:none;
     }
-
     .shuffling .cardFrame{
       border-color:rgba(82,0,255,.38);
       box-shadow:0 0 0 4px rgba(82,0,255,.10), 0 20px 50px rgba(26,34,76,.12);
@@ -183,6 +205,142 @@
       100% {transform:translateY(0) rotate(-.35deg) scale(1.01)}
     }
 
+    /* Class group grid */
+    .classHeader{
+      max-width:980px;
+      margin:0 auto 10px;
+      text-align:left;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 14px;
+      box-shadow:0 2px 10px rgba(26,34,76,.06);
+    }
+    .classHeader .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(82,0,255,.18);
+      background:rgba(82,0,255,.06);
+      color:var(--brand-purple);
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .pill .tinyDot{
+      width:8px;height:8px;border-radius:50%;
+      background:var(--brand-green);
+      box-shadow:0 0 0 3px rgba(0,255,153,.15);
+    }
+
+    .groupGrid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap:14px;
+      margin:12px auto 0;
+      max-width:1200px;
+    }
+
+    .groupCard{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      box-shadow:var(--shadow2);
+      text-align:left;
+      overflow:hidden;
+    }
+    .groupTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+      padding-bottom:10px;
+      border-bottom:1px solid rgba(26,34,76,.10);
+    }
+    .groupName{
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+    .groupFlags{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .flag{
+      font-size:11px;
+      font-weight:900;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(26,34,76,.14);
+      background:#fff;
+      color:rgba(26,34,76,.78);
+      white-space:nowrap;
+    }
+    .flag.warn{
+      border-color:rgba(255,59,48,.22);
+      background:rgba(255,59,48,.06);
+      color:rgba(160,0,0,.92);
+    }
+
+    .miniRow{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:8px;
+    }
+    .mini{
+      border:1px solid rgba(26,34,76,.12);
+      border-radius:12px;
+      overflow:hidden;
+      background:linear-gradient(180deg, rgba(0,255,153,.10), rgba(82,0,255,.04));
+      aspect-ratio: 640 / 896;
+      position:relative;
+    }
+    .mini img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+    .miniCap{
+      position:absolute;
+      left:8px; top:8px;
+      font-size:11px;
+      font-weight:900;
+      padding:4px 8px;
+      border-radius:999px;
+      background:rgba(255,255,255,.92);
+      border:1px solid rgba(26,34,76,.10);
+      color:rgba(26,34,76,.85);
+    }
+
+    .groupActions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+      justify-content:flex-end;
+    }
+    .groupActions .button{
+      padding:9px 14px;
+      font-size:13px;
+      font-weight:900;
+    }
+
+    /* Modal */
     .overlay{
       position:fixed;
       inset:0;
@@ -237,7 +395,7 @@
     }
     label{
       font-size:12px;
-      font-weight:800;
+      font-weight:900;
       color:rgba(26,34,76,.82);
       display:block;
       margin-bottom:6px;
@@ -299,136 +457,250 @@
     }
 
     .noSelect, .noSelect *{ user-select:none; -webkit-user-select:none; }
+
+    /* Global “busy” overlay (animation-friendly, SEB-proof) */
+    .busy{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9998;
+      background:rgba(15,18,32,.25);
+      padding:16px;
+    }
+    .busy.open{display:flex}
+    .busyBox{
+      background:#fff;
+      border:1px solid rgba(26,34,76,.14);
+      border-radius:16px;
+      box-shadow:0 24px 70px rgba(0,0,0,.20);
+      padding:14px 16px;
+      width:min(520px, 100%);
+      text-align:left;
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+    }
+    .spinner{
+      width:18px;height:18px;
+      border-radius:50%;
+      border:3px solid rgba(82,0,255,.18);
+      border-top-color:rgba(82,0,255,.85);
+      animation: spin .9s linear infinite;
+      margin-top:2px;
+      flex:0 0 auto;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .busyBox .t1{font-weight:900;color:var(--ink);margin-bottom:2px}
+    .busyBox .t2{font-size:12px;color:rgba(26,34,76,.74);line-height:1.3}
   </style>
 </head>
+
 <body class="noSelect">
   <div class="wrap">
     <h1>Design Thinking — Kaarten Schudden</h1>
     <div class="sub">
-      Vul je naam in. Daarna krijg je 3 kaarten: <strong>PERSONA</strong>, <strong>LOCATIE</strong> en <strong>MODIFIER</strong>.
-      De keuze wordt opgeslagen zodat je niet eindeloos kan herrollen.
+      <strong>Je trekt kaarten in vaste volgorde: PERSONA → LOCATIE → MODIFIER</strong>.
     </div>
 
     <div id="statusBar" class="status">
       <span class="dot" aria-hidden="true"></span>
       <div>
-        <div><strong id="statusTitle">Klaar om te starten</strong></div>
-        <div id="statusText" style="font-size:12px;color:rgba(26,34,76,.74);margin-top:2px;">Vul je naam in om kaarten te trekken.</div>
+        <div><strong id="statusTitle">Klaar</strong></div>
+        <div id="statusText" style="font-size:12px;color:rgba(26,34,76,.74);margin-top:2px;">Selecteer een modus.</div>
       </div>
     </div>
 
-    <div class="controls">
-      <button id="startBtn" class="button">Start & trek kaarten</button>
-      <button id="downloadBtn" class="button secondary" disabled>Download kaarten (PNG)</button>
-      <button id="adminBtn" class="button secondary">Herrol vrijgeven (wachtwoord)</button>
-    </div>
-
-    <div class="grid" aria-live="polite">
-      <div class="cardSlot" id="slot-persona">
-        <div class="slotTitle">
-          <div class="label">PERSONA</div>
-          <div class="tag">Deck 1</div>
-        </div>
-        <div class="cardFrame"><img id="img-persona" alt="PERSONA kaart" src="" /></div>
+    <!-- ===== VIEW: MENU ===== -->
+    <section id="view-menu" class="view active" aria-label="Menu">
+      <div class="controls">
+        <button id="btnGoDemo" class="button">Demo (stap voor stap)</button>
+        <button id="btnGoClass" class="button secondary">Klasmodus (groepen)</button>
+        <button id="btnResetAll" class="button secondary">Reset (wachtwoord)</button>
       </div>
 
-      <div class="cardSlot" id="slot-locatie">
-        <div class="slotTitle">
-          <div class="label">LOCATIE</div>
-          <div class="tag">Deck 2</div>
-        </div>
-        <div class="cardFrame"><img id="img-locatie" alt="LOCATIE kaart" src="" /></div>
+      <div class="divider"></div>
+
+      <div class="sub" style="max-width:980px;">
+          <strong>Start jouw uitleg in de klas met de demomodus. Daarna ga je naar de klasmodus.</strong> 
+      </div>
+    </section>
+
+    <!-- ===== VIEW: DEMO ===== -->
+    <section id="view-demo" class="view" aria-label="Demo">
+      <div class="controls">
+        <button id="demoDrawPersona" class="button">1) Trek persona</button>
+        <button id="demoDrawLocatie" class="button secondary">2) Trek locatie</button>
+        <button id="demoDrawModifier" class="button secondary">3) Trek modifier</button>
+
+        <button id="demoDownload" class="button secondary" disabled>Download (PNG)</button>
+        <button id="demoReset" class="button secondary">Herrol demo (wachtwoord)</button>
+        <button id="demoToMenu" class="button secondary">Terug naar menu</button>
+        <button id="demoToClass" class="button" disabled>Naar klasmodus</button>
       </div>
 
-      <div class="cardSlot" id="slot-modifier">
-        <div class="slotTitle">
-          <div class="label">MODIFIER</div>
-          <div class="tag">Deck 3</div>
+      <div class="grid-big" aria-live="polite">
+        <div class="cardSlot" id="slot-demo-persona">
+          <div class="slotTitle">
+            <div class="label">PERSONA</div>
+            <div class="tag">Stap 1</div>
+          </div>
+          <div class="cardFrame"><img id="img-demo-persona" alt="PERSONA kaart" src="" /></div>
         </div>
-        <div class="cardFrame"><img id="img-modifier" alt="MODIFIER kaart" src="" /></div>
+
+        <div class="cardSlot" id="slot-demo-locatie">
+          <div class="slotTitle">
+            <div class="label">LOCATIE</div>
+            <div class="tag">Stap 2</div>
+          </div>
+          <div class="cardFrame"><img id="img-demo-locatie" alt="LOCATIE kaart" src="" /></div>
+        </div>
+
+        <div class="cardSlot" id="slot-demo-modifier">
+          <div class="slotTitle">
+            <div class="label">MODIFIER</div>
+            <div class="tag">Stap 3</div>
+          </div>
+          <div class="cardFrame"><img id="img-demo-modifier" alt="MODIFIER kaart" src="" /></div>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <!-- ===== VIEW: CLASS ===== -->
+    <section id="view-class" class="view" aria-label="Klasmodus">
+      <div class="controls">
+        <button id="classSetup" class="button">Klas instellen</button>
+
+        <button id="classDrawPersona" class="button secondary" disabled>Trek persona’s</button>
+        <button id="classDrawLocatie" class="button secondary" disabled>Trek locaties</button>
+        <button id="classDrawModifier" class="button secondary" disabled>Trek modifiers</button>
+
+        <button id="classToMenu" class="button secondary">Terug naar menu</button>
+        <button id="classReset" class="button secondary" disabled>Nieuwe klas (wachtwoord)</button>
+      </div>
+
+      <div id="classHeader" class="classHeader" style="display:none;">
+        <div class="row">
+          <div>
+            <div style="font-weight:900;margin-bottom:4px;">Klasoverzicht</div>
+            <div style="font-size:12px;color:rgba(26,34,76,.74);" id="classMeta"></div>
+          </div>
+          <div class="pill"><span class="tinyDot"></span><span id="classStagePill">Stage: —</span></div>
+        </div>
+      </div>
+
+      <div id="groupGrid" class="groupGrid" aria-live="polite"></div>
+    </section>
 
     <footer>
-      © 2025 Robbe Wulgaert · AI in de Klas · aiindeklas.be — Vrij te gebruiken voor educatie
+      © 2026 Robbe Wulgaert · AI in de Klas · aiindeklas.be
     </footer>
   </div>
 
-  <!-- Modal: name entry -->
-  <div id="modalNames" class="overlay" role="dialog" aria-modal="true" aria-labelledby="modalNamesTitle">
-    <div class="modal">
-      <div class="modalHeader">
-        <h2 class="title" id="modalNamesTitle">Wie speelt er mee?</h2>
-      </div>
-      <div class="modalBody">
-        <p>Vul je naam in. Voeg buddy’s toe als je samenwerkt.</p>
-
-        <div class="fieldRow">
-          <div>
-            <label for="studentName">Jouw naam</label>
-            <input id="studentName" type="text" autocomplete="off" inputmode="text" />
-          </div>
-          <div>
-            <label for="buddyNames">Buddy(’s) (optioneel)</label>
-            <input id="buddyNames" type="text" autocomplete="off" placeholder="bv. Alex + Sam" inputmode="text" />
-            <div class="smallNote">Meerdere buddy’s: gebruik een <strong>+</strong> tussen de namen.</div>
-          </div>
-        </div>
-
-        <div class="smallNote">De tool bewaart je trekbeurt op dit toestel (localStorage).</div>
-      </div>
-      <div class="modalFooter">
-        <button id="namesCancel" class="button secondary">Annuleer</button>
-        <button id="namesOk" class="button">Trek kaarten</button>
+  <!-- ===== BUSY OVERLAY ===== -->
+  <div id="busy" class="busy" aria-hidden="true">
+    <div class="busyBox">
+      <div class="spinner" aria-hidden="true"></div>
+      <div>
+        <div class="t1" id="busyTitle">Bezig…</div>
+        <div class="t2" id="busyText">Even wachten.</div>
       </div>
     </div>
   </div>
 
-  <!-- Modal: password -->
-  <div id="modalAdmin" class="overlay" role="dialog" aria-modal="true" aria-labelledby="modalAdminTitle">
+  <!-- ===== MODAL: INTRO ===== -->
+  <div id="modalIntro" class="overlay" role="dialog" aria-modal="true" aria-labelledby="introTitle">
     <div class="modal">
       <div class="modalHeader">
-        <h2 class="title" id="modalAdminTitle">Herrol vrijgeven</h2>
+        <h2 class="title" id="introTitle">Wat gaat er gebeuren?</h2>
       </div>
       <div class="modalBody">
-        <p>Voer het wachtwoord in om de huidige trekbeurt te verwijderen en opnieuw te mogen rollen.</p>
-        <div class="fieldRow">
-          <div>
-            <label for="adminPass">Wachtwoord</label>
-            <input id="adminPass" type="password" autocomplete="off" />
-          </div>
-        </div>
+        <p><strong>Stap 1 — PERSONA</strong>: voor wie ontwerp je?</p>
+        <p><strong>Stap 2 — LOCATIE</strong>: waar bouw je jouw innovatie?</p>
+        <p><strong>Stap 3 — MODIFIER</strong>: welke extra eis of context moet je meenemen?</p>
+        <div class="smallNote">Daarna maak je een ontwerp dat het leven van je persona beter maakt, binnen de gekozen locatie en modifier.</div>
       </div>
       <div class="modalFooter">
-        <button id="adminCancel" class="button secondary">Annuleer</button>
-        <button id="adminOk" class="button danger">Vrijgeven</button>
+        <button id="introToDemo" class="button">Demo bekijken</button>
+        <button id="introToClass" class="button secondary">Klasmodus starten</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal: download -->
-  <div id="modalDownload" class="overlay" role="dialog" aria-modal="true" aria-labelledby="modalDownloadTitle">
+  <!-- ===== MODAL: CLASS SETUP ===== -->
+  <div id="modalClassSetup" class="overlay" role="dialog" aria-modal="true" aria-labelledby="classSetupTitle">
     <div class="modal">
       <div class="modalHeader">
-        <h2 class="title" id="modalDownloadTitle">Download je kaarten (PNG)</h2>
+        <h2 class="title" id="classSetupTitle">Klas instellen</h2>
       </div>
       <div class="modalBody">
-        <p>Je downloadt je 3 gekozen kaarten als PNG-bestanden.</p>
+        <p>Vul de klasnaam in en het aantal groepen (per groep = een duo).</p>
+        <div class="fieldRow">
+          <div>
+            <label for="inpClassName">Klasnaam</label>
+            <input id="inpClassName" type="text" autocomplete="off" />
+          </div>
+          <div>
+            <label for="inpGroupCount">Aantal groepen</label>
+            <input id="inpGroupCount" type="number" min="1" max="50" inputmode="numeric" />
+            <div class="smallNote">De tool verdeelt kaarten met limieten per kaart. Als je te veel groepen hebt, kan overschrijding nodig zijn.</div>
+          </div>
+        </div>
+      </div>
+      <div class="modalFooter">
+        <button id="classSetupCancel" class="button secondary">Annuleer</button>
+        <button id="classSetupOk" class="button">Start</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: PASSWORD (generic) ===== -->
+  <div id="modalPass" class="overlay" role="dialog" aria-modal="true" aria-labelledby="passTitle">
+    <div class="modal">
+      <div class="modalHeader">
+        <h2 class="title" id="passTitle">Wachtwoord vereist</h2>
+      </div>
+      <div class="modalBody">
+        <p id="passText">Voer het wachtwoord in.</p>
+        <div class="fieldRow">
+          <div>
+            <label for="inpPass">Wachtwoord</label>
+            <input id="inpPass" type="password" autocomplete="off" />
+          </div>
+        </div>
+      </div>
+      <div class="modalFooter">
+        <button id="passCancel" class="button secondary">Annuleer</button>
+        <button id="passOk" class="button danger">Bevestig</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: DOWNLOAD ===== -->
+  <div id="modalDownload" class="overlay" role="dialog" aria-modal="true" aria-labelledby="dlTitle">
+    <div class="modal">
+      <div class="modalHeader">
+        <h2 class="title" id="dlTitle">Download kaarten (PNG)</h2>
+      </div>
+      <div class="modalBody">
+        <p id="dlDesc">Je downloadt je 3 gekozen kaarten als PNG-bestanden.</p>
         <div class="thumbs">
           <div class="thumb">
             <div class="cap">PERSONA</div>
-            <img id="thumb-persona" alt="Preview PERSONA" />
+            <img id="dlImgPersona" alt="Preview PERSONA" />
           </div>
           <div class="thumb">
             <div class="cap">LOCATIE</div>
-            <img id="thumb-locatie" alt="Preview LOCATIE" />
+            <img id="dlImgLocatie" alt="Preview LOCATIE" />
           </div>
           <div class="thumb">
             <div class="cap">MODIFIER</div>
-            <img id="thumb-modifier" alt="Preview MODIFIER" />
+            <img id="dlImgModifier" alt="Preview MODIFIER" />
           </div>
         </div>
-        
+        <div class="smallNote" id="dlNote"></div>
+      </div>
       <div class="modalFooter">
         <button id="dlClose" class="button secondary">Sluiten</button>
         <button id="dlThree" class="button">Download 3 PNG’s</button>
@@ -439,36 +711,116 @@
 
   <script>
     /* =========================
-       CONFIG — deck bestanden
-       =========================
-       Verwacht SVG-bestanden in ./SVG/ naast index.html.
+       CONFIG
+       ========================= */
+    const CONFIG = {
+      storageKey: "dt_state_v1",
+      password: "Accenture",
+      svgFolder: "./SVG/",
 
-       Bestandsnamen (met spaties):
-         PERSONA 1.svg, PERSONA 2.svg, ...
-         LOCATIE 1.svg, LOCATIE 2.svg, ...
-         MODIFIER 1.svg, MODIFIER 2.svg, ...
+      decks: {
+        persona:  { prefix: "PERSONA",  count: 5,  cap: 3 },
+        locatie:  { prefix: "LOCATIE",  count: 3,  cap: 5 },
+        modifier: { prefix: "MODIFIER", count: 10, cap: 3 }
+      }
+    };
 
-       Pas COUNTs aan aan jouw mapinhoud.
-    */
-    const STORAGE_KEY = "dt_card_pick_v2";
-    const ADMIN_PASSWORD = "Accenture";
-
-    const DECKS = [
-      { id: "persona",  label: "PERSONA",  prefix: "PERSONA",  count: 5  },
-      { id: "locatie",  label: "LOCATIE",  prefix: "LOCATIE",  count: 3  },
-      { id: "modifier", label: "MODIFIER", prefix: "MODIFIER", count: 10 }
-    ];
+    const DECK_ORDER = ["persona", "locatie", "modifier"];
+    const STAGE_LABELS = {
+      setup: "setup",
+      persona_done: "persona getrokken",
+      locatie_done: "locatie getrokken",
+      modifier_done: "modifier getrokken"
+    };
 
     /* =========================
-       Helpers
+       STATE
        ========================= */
-    function filePath(prefix, idx1based){
-      const fileName = `${prefix} ${idx1based}.svg`;
-      return `./SVG/${encodeURIComponent(fileName)}`;
+    function defaultState(){
+      return {
+        version: 1,
+        introSeen: false,
+        mode: "menu", // menu | demo | class
+        demo: { stage: "persona", picks: {}, locked: false },
+        classSession: null, // {className, groupCount, stage, groups[], counts{}}
+      };
+    }
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(CONFIG.storageKey);
+        if(!raw) return defaultState();
+        const parsed = JSON.parse(raw);
+        if(!parsed || typeof parsed !== "object") return defaultState();
+        return { ...defaultState(), ...parsed };
+      }catch{
+        return defaultState();
+      }
+    }
+
+    function saveState(){
+      localStorage.setItem(CONFIG.storageKey, JSON.stringify(state));
+    }
+
+    function hardResetState(){
+      localStorage.removeItem(CONFIG.storageKey);
+      state = defaultState();
+      saveState();
+    }
+
+    let state = loadState();
+
+    /* =========================
+       DOM helpers
+       ========================= */
+    const $ = (id) => document.getElementById(id);
+
+    function openModal(id){
+      $(id).classList.add("open");
+      const input = $(id).querySelector("input");
+      if(input) setTimeout(() => input.focus(), 0);
+    }
+    function closeModal(id){
+      $(id).classList.remove("open");
+    }
+
+    function setBusy(open, title, text){
+      const el = $("busy");
+      el.classList.toggle("open", !!open);
+      $("busyTitle").textContent = title || "Bezig…";
+      $("busyText").textContent = text || "Even wachten.";
+    }
+
+    function setStatus(locked, title, text){
+      const bar = $("statusBar");
+      bar.classList.toggle("locked", !!locked);
+      $("statusTitle").textContent = title || "";
+      $("statusText").textContent = text || "";
+    }
+
+    function showView(mode){
+      const views = ["view-menu","view-demo","view-class"];
+      for(const v of views) $(v).classList.remove("active");
+      if(mode === "demo") $("view-demo").classList.add("active");
+      else if(mode === "class") $("view-class").classList.add("active");
+      else $("view-menu").classList.add("active");
+    }
+
+    function isFileMode(){
+      return location.protocol === "file:";
+    }
+
+    /* =========================
+       Card path
+       ========================= */
+    function filePath(deckId, idx1based){
+      const d = CONFIG.decks[deckId];
+      const fileName = `${d.prefix} ${idx1based}.svg`;
+      return CONFIG.svgFolder + encodeURIComponent(fileName);
     }
 
     function cryptoRandInt(maxExclusive){
-      if (window.crypto && crypto.getRandomValues) {
+      if(window.crypto && crypto.getRandomValues){
         const buf = new Uint32Array(1);
         window.crypto.getRandomValues(buf);
         return buf[0] % maxExclusive;
@@ -476,154 +828,281 @@
       return Math.floor(Math.random() * maxExclusive);
     }
 
-    function parseParticipants(main, buddiesRaw){
-      const clean = (s) => s.trim().replace(/\s+/g, " ");
-      const out = [];
-      const m = clean(main || "");
-      if (m) out.push(m);
-      const b = clean(buddiesRaw || "");
-      if (b) b.split("+").map(clean).filter(Boolean).forEach(x => out.push(x));
-      const seen = new Set();
-      return out.filter(n => {
-        const key = n.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    }
-
-    function slug(s){
-      return (s || "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")
-        .slice(0, 60) || "leerling";
-    }
-
-    function openModal(id){
-      const el = document.getElementById(id);
-      el.classList.add("open");
-      const input = el.querySelector("input");
-      if (input) setTimeout(() => input.focus(), 0);
-    }
-    function closeModal(id){
-      document.getElementById(id).classList.remove("open");
-    }
-
-    function setStatus(locked, title, text){
-      const bar = document.getElementById("statusBar");
-      bar.classList.toggle("locked", !!locked);
-      document.getElementById("statusTitle").textContent = title;
-      document.getElementById("statusText").textContent = text;
-    }
-
-    function getSavedPick(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(!raw) return null;
-        return JSON.parse(raw);
-      }catch(e){
-        return null;
-      }
-    }
-    function savePick(obj){ localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }
-    function clearPick(){ localStorage.removeItem(STORAGE_KEY); }
-
-    function applyPickToUI(pick){
-      for (const d of DECKS){
-        document.getElementById(`img-${d.id}`).src = pick.picks[d.id].src;
-      }
-    }
-
-    function setControlsLocked(isLocked){
-      document.getElementById("startBtn").disabled = isLocked;
-      document.getElementById("downloadBtn").disabled = !isLocked; // enkel als er een vaste pick is
+    function pickRandomIndex(deckId){
+      const n = CONFIG.decks[deckId].count;
+      return 1 + cryptoRandInt(n);
     }
 
     /* =========================
-       Shuffle animation + pick
+       Allocation (caps)
        ========================= */
-    async function animateAndPick(participants){
-      for (const d of DECKS){
-        document.getElementById(`slot-${d.id}`).classList.add("shuffling");
+    function initCounts(){
+      const counts = {};
+      for(const deckId of DECK_ORDER){
+        const n = CONFIG.decks[deckId].count;
+        const arr = new Array(n + 1).fill(0);
+        counts[deckId] = arr;
+      }
+      return counts;
+    }
+
+    function canFit(groupCount){
+      // capacity checks (not blocking; used for messaging)
+      const capP = CONFIG.decks.persona.count  * CONFIG.decks.persona.cap;
+      const capL = CONFIG.decks.locatie.count  * CONFIG.decks.locatie.cap;
+      const capM = CONFIG.decks.modifier.count * CONFIG.decks.modifier.cap;
+      return {
+        personaOk: groupCount <= capP,
+        locatieOk: groupCount <= capL,
+        modifierOk: groupCount <= capM
+      };
+    }
+
+    function availableIndices(deckId, countsArr, cap){
+      const out = [];
+      for(let i=1;i<countsArr.length;i++){
+        if(countsArr[i] < cap) out.push(i);
+      }
+      return out;
+    }
+
+    function allocateOne(deckId, counts, allowOverflow){
+      const cap = CONFIG.decks[deckId].cap;
+      const n = CONFIG.decks[deckId].count;
+      const countsArr = counts[deckId];
+      const avail = availableIndices(deckId, countsArr, cap);
+
+      let idx;
+      let overflow = false;
+
+      if(avail.length > 0){
+        idx = avail[cryptoRandInt(avail.length)];
+      } else {
+        idx = 1 + cryptoRandInt(n);
+        overflow = true;
+        if(!allowOverflow){
+          // still returns a pick; tool must not deadlock
+          overflow = true;
+        }
       }
 
+      countsArr[idx] += 1;
+      return { index: idx, src: filePath(deckId, idx), overflow };
+    }
+
+    function decrementPick(deckId, counts, pick){
+      if(!pick || !pick.index) return;
+      const arr = counts[deckId];
+      const idx = pick.index;
+      if(arr && arr[idx] > 0) arr[idx] -= 1;
+    }
+
+    function stageDecks(stage){
+      if(stage === "setup") return [];
+      if(stage === "persona_done") return ["persona"];
+      if(stage === "locatie_done") return ["persona","locatie"];
+      return ["persona","locatie","modifier"]; // modifier_done
+    }
+
+    /* =========================
+       Animation utilities
+       ========================= */
+    async function animateSlot(deckId, slotEl, imgEl, durationMs){
+      slotEl.classList.add("shuffling");
       const start = performance.now();
-      const DURATION = 1400;
       let raf = null;
 
-      const cycle = () => {
-        const now = performance.now();
-        const t = now - start;
+      const tick = () => {
+        const t = performance.now() - start;
+        imgEl.src = filePath(deckId, pickRandomIndex(deckId));
+        if(t < durationMs) raf = requestAnimationFrame(tick);
+      };
 
-        for (const d of DECKS){
-          const img = document.getElementById(`img-${d.id}`);
-          const idx = 1 + cryptoRandInt(d.count);
-          img.src = filePath(d.prefix, idx);
+      raf = requestAnimationFrame(tick);
+      await new Promise(r => setTimeout(r, durationMs + 80));
+      if(raf) cancelAnimationFrame(raf);
+      slotEl.classList.remove("shuffling");
+    }
+
+    async function animateGroupThumbs(deckId, groupIds, durationMs){
+      const start = performance.now();
+      let raf = null;
+
+      const tick = () => {
+        const t = performance.now() - start;
+        for(const gid of groupIds){
+          const img = document.querySelector(`[data-group="${gid}"][data-deck="${deckId}"]`);
+          if(img) img.src = filePath(deckId, pickRandomIndex(deckId));
         }
-
-        if (t < DURATION) raf = requestAnimationFrame(cycle);
-      };
-      raf = requestAnimationFrame(cycle);
-
-      await new Promise(res => setTimeout(res, DURATION + 120));
-      if (raf) cancelAnimationFrame(raf);
-
-      const picks = {};
-      for (const d of DECKS){
-        const idx1 = 1 + cryptoRandInt(d.count);
-        picks[d.id] = { index: idx1, src: filePath(d.prefix, idx1), label: d.label };
-      }
-
-      for (const d of DECKS){
-        document.getElementById(`slot-${d.id}`).classList.remove("shuffling");
-      }
-
-      const pickObj = {
-        version: 2,
-        when: new Date().toISOString(),
-        participants,
-        picks
+        if(t < durationMs) raf = requestAnimationFrame(tick);
       };
 
-      applyPickToUI(pickObj);
-      savePick(pickObj);
-
-      setControlsLocked(true);
-      setStatus(true, "Kaarten vastgezet", `Trekbeurt opgeslagen voor: ${participants.join(" + ")}`);
+      raf = requestAnimationFrame(tick);
+      await new Promise(r => setTimeout(r, durationMs + 80));
+      if(raf) cancelAnimationFrame(raf);
     }
 
     /* =========================
-       SVG -> PNG export
+       Demo logic
+       ========================= */
+    function demoResetNoPass(){
+      state.demo = { stage: "persona", picks: {}, locked: false };
+      saveState();
+      render();
+    }
+
+    async function demoDraw(deckId){
+      if(state.demo.locked) return;
+
+      const stage = state.demo.stage;
+      const expected = stage; // persona|locatie|modifier
+      if(deckId !== expected) return;
+
+      const slotEl = $(`slot-demo-${deckId}`);
+      const imgEl  = $(`img-demo-${deckId}`);
+
+      setBusy(true, "Kaarten schudden…", `Stap ${DECK_ORDER.indexOf(deckId)+1}: ${deckId.toUpperCase()}`);
+      await animateSlot(deckId, slotEl, imgEl, 1100);
+
+      const idx = pickRandomIndex(deckId);
+      state.demo.picks[deckId] = { index: idx, src: filePath(deckId, idx), overflow: false };
+
+      if(deckId === "persona") state.demo.stage = "locatie";
+      else if(deckId === "locatie") state.demo.stage = "modifier";
+      else {
+        state.demo.stage = "done";
+        state.demo.locked = true;
+      }
+
+      saveState();
+      setBusy(false);
+      render();
+    }
+
+    /* =========================
+       Class logic
+       ========================= */
+    function createClassSession(className, groupCount){
+      const groups = [];
+      for(let i=1;i<=groupCount;i++){
+        groups.push({
+          id: i,
+          picks: {},
+          overflow: { persona:false, locatie:false, modifier:false },
+          rerolls: 0
+        });
+      }
+
+      state.classSession = {
+        className: className.trim() || "Klas",
+        groupCount,
+        stage: "setup",
+        groups,
+        counts: initCounts()
+      };
+
+      saveState();
+    }
+
+    async function classBatchDraw(deckId){
+      const cs = state.classSession;
+      if(!cs) return;
+
+      const stage = cs.stage;
+      const stageAllowed =
+        (deckId === "persona"  && stage === "setup") ||
+        (deckId === "locatie"  && stage === "persona_done") ||
+        (deckId === "modifier" && stage === "locatie_done");
+      if(!stageAllowed) return;
+
+      // groups missing this pick
+      const targets = cs.groups.filter(g => !g.picks[deckId]).map(g => g.id);
+      if(targets.length === 0) return;
+
+      setBusy(true, "Kaarten schudden…", `${deckId.toUpperCase()} verdelen over ${targets.length} groep(en).`);
+      await animateGroupThumbs(deckId, targets, 950);
+
+      // allocate
+      for(const gid of targets){
+        const g = cs.groups.find(x => x.id === gid);
+        const pick = allocateOne(deckId, cs.counts, true);
+        g.picks[deckId] = { index: pick.index, src: pick.src };
+        g.overflow[deckId] = !!pick.overflow;
+      }
+
+      // advance stage
+      if(deckId === "persona") cs.stage = "persona_done";
+      else if(deckId === "locatie") cs.stage = "locatie_done";
+      else cs.stage = "modifier_done";
+
+      saveState();
+      setBusy(false);
+      render();
+    }
+
+    function classResetNoPass(){
+      state.classSession = null;
+      saveState();
+      render();
+    }
+
+    function rerollGroupNoPass(groupId){
+      const cs = state.classSession;
+      if(!cs) return;
+
+      const g = cs.groups.find(x => x.id === groupId);
+      if(!g) return;
+
+      const decks = stageDecks(cs.stage);
+      if(decks.length === 0) return;
+
+      // remove existing picks from counts
+      for(const deckId of decks){
+        decrementPick(deckId, cs.counts, g.picks[deckId]);
+        delete g.picks[deckId];
+        g.overflow[deckId] = false;
+      }
+
+      // reallocate only for this group, for decks already in play
+      for(const deckId of decks){
+        const pick = allocateOne(deckId, cs.counts, true);
+        g.picks[deckId] = { index: pick.index, src: pick.src };
+        g.overflow[deckId] = !!pick.overflow;
+      }
+
+      g.rerolls += 1;
+      saveState();
+      render();
+    }
+
+    /* =========================
+       Download (Demo / Group)
        ========================= */
     function parseSvgSize(svgText){
-      // fallback to card ratio
       const fallback = { w: 640, h: 896 };
-
       try{
         const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
         const svg = doc.documentElement;
-        if (!svg) return fallback;
-
-        const wAttr = svg.getAttribute("width");
-        const hAttr = svg.getAttribute("height");
+        if(!svg) return fallback;
 
         const toNum = (v) => {
-          if (!v) return null;
+          if(!v) return null;
           const m = String(v).match(/[\d.]+/);
           return m ? Number(m[0]) : null;
         };
 
+        const wAttr = svg.getAttribute("width");
+        const hAttr = svg.getAttribute("height");
         const w = toNum(wAttr);
         const h = toNum(hAttr);
-        if (w && h) return { w: Math.round(w), h: Math.round(h) };
+        if(w && h) return { w: Math.round(w), h: Math.round(h) };
 
         const vb = svg.getAttribute("viewBox");
-        if (vb){
+        if(vb){
           const parts = vb.split(/[,\s]+/).map(Number).filter(n => !Number.isNaN(n));
-          if (parts.length === 4){
+          if(parts.length === 4){
             const vw = parts[2], vh = parts[3];
-            if (vw > 0 && vh > 0) return { w: Math.round(vw), h: Math.round(vh) };
+            if(vw > 0 && vh > 0) return { w: Math.round(vw), h: Math.round(vh) };
           }
         }
         return fallback;
@@ -633,10 +1112,13 @@
     }
 
     async function svgPathToPngBlob(svgPath){
-      const res = await fetch(svgPath, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Kan SVG niet laden: ${svgPath}`);
-      const svgText = await res.text();
+      if(isFileMode()){
+        throw new Error("PNG-export werkt niet in file:// modus. Gebruik http(s).");
+      }
 
+      const res = await fetch(svgPath, { cache: "no-store" });
+      if(!res.ok) throw new Error("Kan SVG niet laden.");
+      const svgText = await res.text();
       const size = parseSvgSize(svgText);
 
       const blob = new Blob([svgText], { type: "image/svg+xml" });
@@ -644,15 +1126,14 @@
 
       try{
         const img = new Image();
+        img.crossOrigin = "anonymous";
         img.decoding = "async";
 
-        const loaded = new Promise((resolve, reject) => {
-          img.onload = () => resolve();
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
           img.onerror = () => reject(new Error("SVG render fout"));
+          img.src = url;
         });
-
-        img.src = url;
-        await loaded;
 
         const canvas = document.createElement("canvas");
         canvas.width = size.w;
@@ -661,12 +1142,10 @@
         const ctx = canvas.getContext("2d", { alpha: false });
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
         const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png", 0.92));
-        if (!pngBlob) throw new Error("PNG export fout");
-
+        if(!pngBlob) throw new Error("PNG export fout");
         return { blob: pngBlob, w: canvas.width, h: canvas.height };
       } finally {
         URL.revokeObjectURL(url);
@@ -681,24 +1160,28 @@
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setTimeout(() => URL.revokeObjectURL(url), 800);
     }
 
-    async function downloadThreePngs(saved){
-      const base = slug(saved.participants.join("-"));
-      for (const d of DECKS){
-        const { blob } = await svgPathToPngBlob(saved.picks[d.id].src);
-        const fn = `design-thinking_${base}_${d.label}_${saved.picks[d.id].index}.png`;
-        triggerDownloadBlob(blob, fn);
+    function slug(s){
+      return (s || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60) || "groep";
+    }
+
+    async function downloadThree(picks, filenameBase){
+      for(const deckId of DECK_ORDER){
+        const { blob } = await svgPathToPngBlob(picks[deckId].src);
+        triggerDownloadBlob(blob, `${filenameBase}_${deckId.toUpperCase()}_${picks[deckId].index}.png`);
       }
     }
 
-    async function downloadCombinedPng(saved){
-      const base = slug(saved.participants.join("-"));
-
-      const a = await svgPathToPngBlob(saved.picks.persona.src);
-      const b = await svgPathToPngBlob(saved.picks.locatie.src);
-      const c = await svgPathToPngBlob(saved.picks.modifier.src);
+    async function downloadCombined(picks, filenameBase){
+      const a = await svgPathToPngBlob(picks.persona.src);
+      const b = await svgPathToPngBlob(picks.locatie.src);
+      const c = await svgPathToPngBlob(picks.modifier.src);
 
       const gap = 24;
       const targetH = Math.max(a.h, b.h, c.h);
@@ -712,7 +1195,6 @@
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // load the PNG blobs back into images for draw (fast + consistent)
       async function blobToImage(blob){
         const url = URL.createObjectURL(blob);
         try{
@@ -725,7 +1207,7 @@
           });
           return img;
         } finally {
-          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          setTimeout(() => URL.revokeObjectURL(url), 800);
         }
       }
 
@@ -740,129 +1222,490 @@
       ctx.drawImage(imgC, x, y, c.w, c.h);
 
       const outBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png", 0.92));
-      const fn = `design-thinking_${base}_3kaarten.png`;
-      triggerDownloadBlob(outBlob, fn);
+      triggerDownloadBlob(outBlob, `${filenameBase}_3KAARTEN.png`);
     }
 
-    function syncDownloadThumbs(saved){
-      document.getElementById("thumb-persona").src = saved.picks.persona.src;
-      document.getElementById("thumb-locatie").src = saved.picks.locatie.src;
-      document.getElementById("thumb-modifier").src = saved.picks.modifier.src;
+    let downloadContext = null; // {type:'demo'|'group', groupId?}
+
+    function openDownloadModal(context){
+      downloadContext = context;
+
+      const picks = getContextPicks(context);
+      if(!picks) return;
+
+      $("dlImgPersona").src = picks.persona.src;
+      $("dlImgLocatie").src = picks.locatie.src;
+      $("dlImgModifier").src = picks.modifier.src;
+
+      const fileMode = isFileMode();
+      $("dlThree").disabled = fileMode;
+      $("dlOne").disabled = fileMode;
+
+      if(fileMode){
+        $("dlNote").textContent = "PNG-export werkt niet in file:// modus. Gebruik http://localhost (lokale server) of hosting.";
+      } else {
+        $("dlNote").textContent = "Downloaden maakt een beeldkopie van je SVG-kaarten. Geen tekst of logo’s worden toegevoegd.";
+      }
+
+      openModal("modalDownload");
+    }
+
+    function getContextPicks(ctx){
+      if(!ctx) return null;
+
+      if(ctx.type === "demo"){
+        const p = state.demo.picks;
+        if(!p.persona || !p.locatie || !p.modifier) return null;
+        return p;
+      }
+
+      if(ctx.type === "group"){
+        const cs = state.classSession;
+        if(!cs) return null;
+        const g = cs.groups.find(x => x.id === ctx.groupId);
+        if(!g) return null;
+        if(!g.picks.persona || !g.picks.locatie || !g.picks.modifier) return null;
+        return g.picks;
+      }
+
+      return null;
+    }
+
+    function getContextFilenameBase(ctx){
+      if(ctx.type === "demo"){
+        return "design-thinking_demo";
+      }
+      const cs = state.classSession;
+      const base = slug((cs?.className || "klas") + "_groep-" + String(ctx.groupId));
+      return "design-thinking_" + base;
     }
 
     /* =========================
-       Boot
+       Password actions
        ========================= */
-    function boot(){
-      const saved = getSavedPick();
+    let pendingPassAction = null; // {text, run()}
 
-      if (saved && saved.picks && saved.participants){
-        applyPickToUI(saved);
-        setControlsLocked(true);
-        setStatus(true, "Kaarten vastgezet", `Trekbeurt opgeslagen voor: ${saved.participants.join(" + ")}`);
-      } else {
-        for (const d of DECKS){
-          document.getElementById(`img-${d.id}`).src = filePath(d.prefix, 1);
-        }
-        setControlsLocked(false);
-        setStatus(false, "Klaar om te starten", "Vul je naam in om kaarten te trekken.");
+    function requirePassword(text, onOk){
+      pendingPassAction = { text, run: onOk };
+      $("passText").textContent = text;
+      $("inpPass").value = "";
+      openModal("modalPass");
+    }
+
+    function handlePasswordOk(){
+      const pass = $("inpPass").value || "";
+      $("inpPass").value = "";
+      closeModal("modalPass");
+
+      if(pass !== CONFIG.password){
+        setStatus(true, "Wachtwoord fout", "Actie geweigerd.");
+        pendingPassAction = null;
+        return;
       }
 
-      document.getElementById("startBtn").addEventListener("click", () => {
-        if (getSavedPick()) return;
-        openModal("modalNames");
-      });
+      const action = pendingPassAction;
+      pendingPassAction = null;
+      if(action && typeof action.run === "function") action.run();
+    }
 
-      document.getElementById("namesCancel").addEventListener("click", () => closeModal("modalNames"));
+    /* =========================
+       Rendering
+       ========================= */
+    function render(){
+      showView(state.mode);
 
-      document.getElementById("namesOk").addEventListener("click", async () => {
-        const name = document.getElementById("studentName").value || "";
-        const buddies = document.getElementById("buddyNames").value || "";
-        const participants = parseParticipants(name, buddies);
+      // Intro auto-open once
+      if(!state.introSeen){
+        openModal("modalIntro");
+      } else {
+        closeModal("modalIntro");
+      }
 
-        closeModal("modalNames");
+      // Menu status
+      if(state.mode === "menu"){
+        const fileMode = isFileMode();
+        const msg = fileMode ? "Let op: PNG-export werkt enkel via http(s)." : "Selecteer demo of klasmodus.";
+        setStatus(false, "Menu", msg);
+      }
 
-        if (participants.length === 0){
-          setStatus(false, "Naam ontbreekt", "Vul minstens je eigen naam in.");
+      // Demo view
+      if(state.mode === "demo"){
+        const d = state.demo;
+        // placeholders
+        $("img-demo-persona").src  = d.picks.persona  ? d.picks.persona.src  : filePath("persona", 1);
+        $("img-demo-locatie").src  = d.picks.locatie  ? d.picks.locatie.src  : filePath("locatie", 1);
+        $("img-demo-modifier").src = d.picks.modifier ? d.picks.modifier.src : filePath("modifier", 1);
+
+        // buttons
+        const stage = d.stage;
+        $("demoDrawPersona").disabled  = d.locked || stage !== "persona";
+        $("demoDrawLocatie").disabled  = d.locked || stage !== "locatie";
+        $("demoDrawModifier").disabled = d.locked || stage !== "modifier";
+
+        const done = d.locked && d.picks.persona && d.picks.locatie && d.picks.modifier;
+        $("demoDownload").disabled = !done;
+        $("demoToClass").disabled = !done;
+
+        if(d.locked){
+          setStatus(true, "Demo klaar", "Resultaat staat vast. Download of ga naar klasmodus.");
+        } else {
+          const step = stage === "persona" ? "Stap 1: trek een PERSONA."
+                    : stage === "locatie" ? "Stap 2: trek een LOCATIE."
+                    : stage === "modifier" ? "Stap 3: trek een MODIFIER."
+                    : "Demo.";
+          const fileMode = isFileMode() ? " PNG-export enkel via http(s)." : "";
+          setStatus(false, "Demo", step + fileMode);
+        }
+      }
+
+      // Class view
+      if(state.mode === "class"){
+        const cs = state.classSession;
+
+        $("classHeader").style.display = cs ? "block" : "none";
+        $("classReset").disabled = !cs;
+
+        if(!cs){
+          setStatus(false, "Klasmodus", "Klik ‘Klas instellen’ om te starten.");
+          $("classDrawPersona").disabled = true;
+          $("classDrawLocatie").disabled = true;
+          $("classDrawModifier").disabled = true;
+          $("groupGrid").innerHTML = "";
           return;
         }
 
-        setStatus(false, "Kaarten worden geschud…", `Voor: ${participants.join(" + ")}`);
-        setControlsLocked(true);
+        // stage pill
+        $("classMeta").textContent = `Klas: ${cs.className} · Groepen: ${cs.groupCount}`;
+        $("classStagePill").textContent = `Stage: ${STAGE_LABELS[cs.stage] || cs.stage}`;
 
-        try{
-          await animateAndPick(participants);
-        } catch (e){
-          setControlsLocked(false);
-          setStatus(false, "Fout bij schudden", "Kaarten konden niet geladen worden. Controleer de SVG-bestanden.");
+        // controls by stage
+        $("classDrawPersona").disabled = cs.stage !== "setup";
+        $("classDrawLocatie").disabled = cs.stage !== "persona_done";
+        $("classDrawModifier").disabled = cs.stage !== "locatie_done";
+
+        // status
+        const cap = canFit(cs.groupCount);
+        let warn = [];
+        if(!cap.personaOk) warn.push("PERSONA-cap overschreden");
+        if(!cap.locatieOk) warn.push("LOCATIE-cap overschreden");
+        if(!cap.modifierOk) warn.push("MODIFIER-cap overschreden");
+
+        const fileMode = isFileMode();
+        const dlWarn = fileMode ? " PNG-export enkel via http(s)." : "";
+
+        if(warn.length){
+          setStatus(true, "Klasmodus (limieten)", warn.join(" · ") + dlWarn);
+        } else {
+          setStatus(false, "Klasmodus", "Trek kaarten per stap. Herrol per groep via wachtwoord." + dlWarn);
         }
+
+        renderGroups(cs);
+      }
+    }
+
+    function renderGroups(cs){
+      const grid = $("groupGrid");
+      grid.innerHTML = "";
+
+      for(const g of cs.groups){
+        const card = document.createElement("div");
+        card.className = "groupCard";
+
+        const top = document.createElement("div");
+        top.className = "groupTop";
+
+        const name = document.createElement("div");
+        name.className = "groupName";
+        name.textContent = `Groep ${g.id}`;
+
+        const flags = document.createElement("div");
+        flags.className = "groupFlags";
+
+        const warnFlags = [];
+        for(const deckId of DECK_ORDER){
+          if(g.overflow && g.overflow[deckId]) warnFlags.push(deckId.toUpperCase());
+        }
+        if(warnFlags.length){
+          const f = document.createElement("span");
+          f.className = "flag warn";
+          f.textContent = `Overschrijding: ${warnFlags.join(", ")}`;
+          flags.appendChild(f);
+        }
+
+        if(g.rerolls > 0){
+          const f = document.createElement("span");
+          f.className = "flag";
+          f.textContent = `Herrol: ${g.rerolls}`;
+          flags.appendChild(f);
+        }
+
+        top.appendChild(name);
+        top.appendChild(flags);
+
+        const miniRow = document.createElement("div");
+        miniRow.className = "miniRow";
+
+        for(const deckId of DECK_ORDER){
+          const mini = document.createElement("div");
+          mini.className = "mini";
+
+          const cap = document.createElement("div");
+          cap.className = "miniCap";
+          cap.textContent = deckId.toUpperCase();
+
+          const img = document.createElement("img");
+          img.setAttribute("data-group", String(g.id));
+          img.setAttribute("data-deck", deckId);
+
+          const pick = g.picks[deckId];
+          img.src = pick ? pick.src : filePath(deckId, 1);
+
+          mini.appendChild(img);
+          mini.appendChild(cap);
+          miniRow.appendChild(mini);
+        }
+
+        const actions = document.createElement("div");
+        actions.className = "groupActions";
+
+        const btnDl = document.createElement("button");
+        btnDl.className = "button secondary";
+        btnDl.textContent = "Download";
+        btnDl.disabled = isFileMode() || cs.stage !== "modifier_done" || !(g.picks.persona && g.picks.locatie && g.picks.modifier);
+        btnDl.addEventListener("click", () => openDownloadModal({ type: "group", groupId: g.id }));
+
+        const btnReroll = document.createElement("button");
+        btnReroll.className = "button secondary";
+        btnReroll.textContent = "Herrol (wachtwoord)";
+        btnReroll.disabled = stageDecks(cs.stage).length === 0;
+        btnReroll.addEventListener("click", () => {
+          requirePassword(`Herrol voor Groep ${g.id}.`, async () => {
+            setBusy(true, "Herrol…", `Groep ${g.id} opnieuw verdelen.`);
+            await animateGroupThumbs(stageDecks(cs.stage)[0] || "persona", [g.id], 650);
+            rerollGroupNoPass(g.id);
+            setBusy(false);
+            setStatus(false, "Herrol uitgevoerd", `Groep ${g.id} kreeg nieuwe kaarten.`);
+          });
+        });
+
+        actions.appendChild(btnDl);
+        actions.appendChild(btnReroll);
+
+        card.appendChild(top);
+        card.appendChild(miniRow);
+        card.appendChild(actions);
+
+        grid.appendChild(card);
+      }
+    }
+
+    /* =========================
+       Wire UI events
+       ========================= */
+    function bind(){
+      // Intro actions
+      $("introToDemo").addEventListener("click", () => {
+        state.introSeen = true;
+        state.mode = "demo";
+        saveState();
+        closeModal("modalIntro");
+        render();
       });
 
-      document.getElementById("adminBtn").addEventListener("click", () => openModal("modalAdmin"));
-      document.getElementById("adminCancel").addEventListener("click", () => {
-        document.getElementById("adminPass").value = "";
-        closeModal("modalAdmin");
+      $("introToClass").addEventListener("click", () => {
+        state.introSeen = true;
+        state.mode = "class";
+        saveState();
+        closeModal("modalIntro");
+        render();
+        openModal("modalClassSetup");
       });
 
-      document.getElementById("adminOk").addEventListener("click", () => {
-        const pass = document.getElementById("adminPass").value || "";
-        document.getElementById("adminPass").value = "";
-        closeModal("modalAdmin");
+      // Menu actions
+      $("btnGoDemo").addEventListener("click", () => {
+        state.mode = "demo";
+        saveState();
+        render();
+      });
 
-        if (pass !== ADMIN_PASSWORD){
-          setStatus(true, "Wachtwoord fout", "Herrol is niet vrijgegeven.");
+      $("btnGoClass").addEventListener("click", () => {
+        state.mode = "class";
+        saveState();
+        render();
+        if(!state.classSession) openModal("modalClassSetup");
+      });
+
+      $("btnResetAll").addEventListener("click", () => {
+        requirePassword("Reset alles (demo + klas).", () => {
+          hardResetState();
+          setStatus(false, "Reset", "Alles is gewist.");
+          render();
+        });
+      });
+
+      // Demo actions
+      $("demoToMenu").addEventListener("click", () => {
+        state.mode = "menu";
+        saveState();
+        render();
+      });
+
+      $("demoToClass").addEventListener("click", () => {
+        state.mode = "class";
+        saveState();
+        render();
+        if(!state.classSession) openModal("modalClassSetup");
+      });
+
+      $("demoDrawPersona").addEventListener("click", () => demoDraw("persona"));
+      $("demoDrawLocatie").addEventListener("click", () => demoDraw("locatie"));
+      $("demoDrawModifier").addEventListener("click", () => demoDraw("modifier"));
+
+      $("demoReset").addEventListener("click", () => {
+        requirePassword("Herrol demo (wis demo-resultaat).", () => {
+          demoResetNoPass();
+          setStatus(false, "Demo gereset", "Trek opnieuw: persona → locatie → modifier.");
+        });
+      });
+
+      $("demoDownload").addEventListener("click", () => {
+        if(!(state.demo.picks.persona && state.demo.picks.locatie && state.demo.picks.modifier)) return;
+        openDownloadModal({ type: "demo" });
+      });
+
+      // Class actions
+      $("classToMenu").addEventListener("click", () => {
+        state.mode = "menu";
+        saveState();
+        render();
+      });
+
+      $("classSetup").addEventListener("click", () => openModal("modalClassSetup"));
+
+      $("classReset").addEventListener("click", () => {
+        requirePassword("Nieuwe klas starten (wis huidige klas).", () => {
+          classResetNoPass();
+          setStatus(false, "Klas gewist", "Stel een nieuwe klas in.");
+        });
+      });
+
+      $("classDrawPersona").addEventListener("click", () => classBatchDraw("persona"));
+      $("classDrawLocatie").addEventListener("click", () => classBatchDraw("locatie"));
+      $("classDrawModifier").addEventListener("click", () => classBatchDraw("modifier"));
+
+      // Class setup modal
+      $("classSetupCancel").addEventListener("click", () => closeModal("modalClassSetup"));
+      $("classSetupOk").addEventListener("click", () => {
+        const name = ($("inpClassName").value || "").trim();
+        const nRaw = $("inpGroupCount").value;
+        const n = Math.max(1, Math.min(50, Number(nRaw || 0)));
+
+        if(!name || !Number.isFinite(n) || n < 1){
+          closeModal("modalClassSetup");
+          setStatus(false, "Input ontbreekt", "Vul klasnaam en aantal groepen in.");
           return;
         }
 
-        clearPick();
-        for (const d of DECKS){
-          document.getElementById(`img-${d.id}`).src = filePath(d.prefix, 1);
-        }
-        setControlsLocked(false);
-        setStatus(false, "Herrol vrijgegeven", "Je kan opnieuw kaarten trekken.");
+        createClassSession(name, n);
+        closeModal("modalClassSetup");
+        state.mode = "class";
+        saveState();
+
+        const cap = canFit(n);
+        let msg = `Klas ${name} · ${n} groepen ingesteld.`;
+        const warns = [];
+        if(!cap.personaOk) warns.push("PERSONA");
+        if(!cap.locatieOk) warns.push("LOCATIE");
+        if(!cap.modifierOk) warns.push("MODIFIER");
+        if(warns.length) msg += ` Limieten mogelijk overschreden: ${warns.join(", ")}.`;
+
+        setStatus(false, "Klas ingesteld", msg);
+        render();
       });
+
+      // Password modal
+      $("passCancel").addEventListener("click", () => {
+        $("inpPass").value = "";
+        pendingPassAction = null;
+        closeModal("modalPass");
+      });
+      $("passOk").addEventListener("click", handlePasswordOk);
 
       // Download modal
-      document.getElementById("downloadBtn").addEventListener("click", () => {
-        const s = getSavedPick();
-        if (!s) return;
-        syncDownloadThumbs(s);
-        openModal("modalDownload");
-      });
+      $("dlClose").addEventListener("click", () => closeModal("modalDownload"));
 
-      document.getElementById("dlClose").addEventListener("click", () => closeModal("modalDownload"));
+      $("dlThree").addEventListener("click", async () => {
+        const picks = getContextPicks(downloadContext);
+        if(!picks) return;
 
-      document.getElementById("dlThree").addEventListener("click", async () => {
-        const s = getSavedPick();
-        if (!s) return;
+        closeModal("modalDownload");
+        setBusy(true, "Download…", "PNG’s worden voorbereid.");
 
-        setStatus(true, "Download bezig…", "PNG-export wordt voorbereid.");
         try{
-          await downloadThreePngs(s);
-          setStatus(true, "Download klaar", "Je kaarten zijn gedownload als PNG.");
-          closeModal("modalDownload");
-        } catch (e){
-          setStatus(true, "Download fout", "PNG-export faalde. Controleer of de SVG’s bereikbaar zijn.");
+          const base = getContextFilenameBase(downloadContext);
+          await downloadThree(picks, base);
+          setBusy(false);
+          setStatus(true, "Download klaar", "PNG’s zijn gedownload.");
+        }catch{
+          setBusy(false);
+          setStatus(true, "Download fout", "PNG-export faalde. Gebruik http(s) en controleer de SVG-bestanden.");
         }
       });
 
-      document.getElementById("dlOne").addEventListener("click", async () => {
-        const s = getSavedPick();
-        if (!s) return;
+      $("dlOne").addEventListener("click", async () => {
+        const picks = getContextPicks(downloadContext);
+        if(!picks) return;
 
-        setStatus(true, "Download bezig…", "Gecombineerde PNG wordt voorbereid.");
+        closeModal("modalDownload");
+        setBusy(true, "Download…", "Gecombineerde PNG wordt voorbereid.");
+
         try{
-          await downloadCombinedPng(s);
-          setStatus(true, "Download klaar", "Gecombineerde kaart is gedownload als PNG.");
-          closeModal("modalDownload");
-        } catch (e){
-          setStatus(true, "Download fout", "PNG-export faalde. Controleer of de SVG’s bereikbaar zijn.");
+          const base = getContextFilenameBase(downloadContext);
+          await downloadCombined(picks, base);
+          setBusy(false);
+          setStatus(true, "Download klaar", "Gecombineerde PNG is gedownload.");
+        }catch{
+          setBusy(false);
+          setStatus(true, "Download fout", "PNG-export faalde. Gebruik http(s) en controleer de SVG-bestanden.");
         }
       });
 
       // SEB-light hardening
       document.addEventListener("contextmenu", (e) => e.preventDefault());
       document.addEventListener("dragstart", (e) => e.preventDefault());
+    }
+
+    /* =========================
+       Boot
+       ========================= */
+    function boot(){
+      // Ensure state persisted
+      saveState();
+
+      // If intro already seen but no mode set properly, fall back
+      if(!["menu","demo","class"].includes(state.mode)) state.mode = "menu";
+
+      // If demo stage is done but not locked, normalise
+      if(state.demo.stage === "done") state.demo.locked = true;
+
+      // If classSession exists but counts missing, reconstruct minimal counts (best-effort)
+      if(state.classSession && !state.classSession.counts){
+        state.classSession.counts = initCounts();
+        // rebuild counts from existing picks
+        for(const g of state.classSession.groups || []){
+          for(const deckId of DECK_ORDER){
+            const p = g.picks?.[deckId];
+            if(p?.index){
+              const arr = state.classSession.counts[deckId];
+              if(arr && arr[p.index] !== undefined) arr[p.index] += 1;
+            }
+          }
+        }
+        saveState();
+      }
+
+      bind();
+      render();
     }
 
     window.addEventListener("load", boot);
