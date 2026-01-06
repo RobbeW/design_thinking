@@ -1614,7 +1614,7 @@ top.appendChild(right);
 
         const btnReroll = document.createElement("button");
         btnReroll.className = "button secondary";
-        btnReroll.textContent = "Herrol (wachtwoord)";
+        btnReroll.textContent = "Herrol";
         btnReroll.disabled = stageDecks(cs.stage).length === 0;
         btnReroll.addEventListener("click", () => {
           requirePassword(`Herrol voor Groep ${g.id}.`, async () => {
@@ -1638,181 +1638,251 @@ top.appendChild(right);
     }
 
     /* =========================
-       Wire UI events
-       ========================= */
-    function bind(){
-      // Intro actions
-      $("introToDemo").addEventListener("click", () => {
-        state.introSeen = true;
-        state.mode = "demo";
-        saveState();
-        closeModal("modalIntro");
+   Wire UI events
+   ========================= */
+function bind(){
+  // Intro actions
+  const introToDemoBtn = $("introToDemo");
+  if (introToDemoBtn){
+    introToDemoBtn.addEventListener("click", () => {
+      state.introSeen = true;
+      state.mode = "demo";
+      saveState();
+      closeModal("modalIntro");
+      render();
+    });
+  }
+
+  const introToClassBtn = $("introToClass");
+  if (introToClassBtn){
+    introToClassBtn.addEventListener("click", () => {
+      state.introSeen = true;
+      state.mode = "class";
+      saveState();
+      closeModal("modalIntro");
+      render();
+      openModal("modalClassSetup");
+    });
+  }
+
+  // Menu actions
+  const btnGoDemo = $("btnGoDemo");
+  if (btnGoDemo){
+    btnGoDemo.addEventListener("click", () => {
+      state.mode = "demo";
+      saveState();
+      render();
+    });
+  }
+
+  const btnGoClass = $("btnGoClass");
+  if (btnGoClass){
+    btnGoClass.addEventListener("click", () => {
+      state.mode = "class";
+      saveState();
+      render();
+      if(!state.classSession) openModal("modalClassSetup");
+    });
+  }
+
+  const btnResetAll = $("btnResetAll");
+  if (btnResetAll){
+    btnResetAll.addEventListener("click", () => {
+      requirePassword("Reset alles (demo + klas).", () => {
+        hardResetState();
+        setStatus(false, "Reset", "Alles is gewist.");
         render();
       });
+    });
+  }
 
-      $("introToClass").addEventListener("click", () => {
-        state.introSeen = true;
-        state.mode = "class";
-        saveState();
-        closeModal("modalIntro");
-        render();
-        openModal("modalClassSetup");
+  // Demo actions
+  const demoToMenuBtn = $("demoToMenu");
+  if (demoToMenuBtn){
+    demoToMenuBtn.addEventListener("click", () => {
+      state.mode = "menu";
+      saveState();
+      render();
+    });
+  }
+
+  const demoToClassBtn = $("demoToClass");
+  if (demoToClassBtn){
+    demoToClassBtn.addEventListener("click", () => {
+      state.mode = "class";
+      saveState();
+      render();
+      if(!state.classSession) openModal("modalClassSetup");
+    });
+  }
+
+  const demoDrawPersonaBtn = $("demoDrawPersona");
+  if (demoDrawPersonaBtn) demoDrawPersonaBtn.addEventListener("click", () => demoDraw("persona"));
+
+  const demoDrawLocatieBtn = $("demoDrawLocatie");
+  if (demoDrawLocatieBtn) demoDrawLocatieBtn.addEventListener("click", () => demoDraw("locatie"));
+
+  const demoDrawModifierBtn = $("demoDrawModifier");
+  if (demoDrawModifierBtn) demoDrawModifierBtn.addEventListener("click", () => demoDraw("modifier"));
+
+  const demoResetBtn = $("demoReset");
+  if (demoResetBtn){
+    demoResetBtn.addEventListener("click", () => {
+      requirePassword("Herrol demo (wis demo-resultaat).", () => {
+        demoResetNoPass();
+        setStatus(false, "Demo gereset", "Trek opnieuw: persona → locatie → modifier.");
       });
+    });
+  }
 
-      // Menu actions
-      $("btnGoDemo").addEventListener("click", () => {
-        state.mode = "demo";
-        saveState();
-        render();
+  const demoDownloadBtn = $("demoDownload");
+  if (demoDownloadBtn){
+    demoDownloadBtn.addEventListener("click", () => {
+      if(!(state.demo.picks.persona && state.demo.picks.locatie && state.demo.picks.modifier)) return;
+      openDownloadModal({ type: "demo" });
+    });
+  }
+
+  // Class actions
+  const classToMenuBtn = $("classToMenu");
+  if (classToMenuBtn){
+    classToMenuBtn.addEventListener("click", () => {
+      state.mode = "menu";
+      saveState();
+      render();
+    });
+  }
+
+  const classSetupBtn = $("classSetup");
+  if (classSetupBtn) classSetupBtn.addEventListener("click", () => openModal("modalClassSetup"));
+
+  const classResetBtn = $("classReset");
+  if (classResetBtn){
+    classResetBtn.addEventListener("click", () => {
+      requirePassword("Nieuwe klas starten (wis huidige klas).", () => {
+        classResetNoPass();
+        setStatus(false, "Klas gewist", "Stel een nieuwe klas in.");
       });
+    });
+  }
 
-      $("btnGoClass").addEventListener("click", () => {
-        state.mode = "class";
-        saveState();
-        render();
-        if(!state.classSession) openModal("modalClassSetup");
-      });
+  const classDrawPersonaBtn = $("classDrawPersona");
+  if (classDrawPersonaBtn) classDrawPersonaBtn.addEventListener("click", () => classBatchDraw("persona"));
 
-      $("btnResetAll").addEventListener("click", () => {
-        requirePassword("Reset alles (demo + klas).", () => {
-          hardResetState();
-          setStatus(false, "Reset", "Alles is gewist.");
-          render();
-        });
-      });
+  const classDrawLocatieBtn = $("classDrawLocatie");
+  if (classDrawLocatieBtn) classDrawLocatieBtn.addEventListener("click", () => classBatchDraw("locatie"));
 
-      // Demo actions
-      $("demoToMenu").addEventListener("click", () => {
-        state.mode = "menu";
-        saveState();
-        render();
-      });
+  const classDrawModifierBtn = $("classDrawModifier");
+  if (classDrawModifierBtn) classDrawModifierBtn.addEventListener("click", () => classBatchDraw("modifier"));
 
-      $("demoToClass").addEventListener("click", () => {
-        state.mode = "class";
-        saveState();
-        render();
-        if(!state.classSession) openModal("modalClassSetup");
-      });
+  // Class setup modal
+  const classSetupCancelBtn = $("classSetupCancel");
+  if (classSetupCancelBtn) classSetupCancelBtn.addEventListener("click", () => closeModal("modalClassSetup"));
 
-      $("demoDrawPersona").addEventListener("click", () => demoDraw("persona"));
-      $("demoDrawLocatie").addEventListener("click", () => demoDraw("locatie"));
-      $("demoDrawModifier").addEventListener("click", () => demoDraw("modifier"));
+  const classSetupOkBtn = $("classSetupOk");
+  if (classSetupOkBtn){
+    classSetupOkBtn.addEventListener("click", () => {
+      const name = ($("inpClassName")?.value || "").trim();
+      const nRaw = $("inpGroupCount")?.value;
+      const n = Math.max(1, Math.min(50, Number(nRaw || 0)));
 
-      $("demoReset").addEventListener("click", () => {
-        requirePassword("Herrol demo (wis demo-resultaat).", () => {
-          demoResetNoPass();
-          setStatus(false, "Demo gereset", "Trek opnieuw: persona → locatie → modifier.");
-        });
-      });
-
-      $("demoDownload").addEventListener("click", () => {
-        if(!(state.demo.picks.persona && state.demo.picks.locatie && state.demo.picks.modifier)) return;
-        openDownloadModal({ type: "demo" });
-      });
-
-      // Class actions
-      $("classToMenu").addEventListener("click", () => {
-        state.mode = "menu";
-        saveState();
-        render();
-      });
-
-      $("classSetup").addEventListener("click", () => openModal("modalClassSetup"));
-
-      $("classReset").addEventListener("click", () => {
-        requirePassword("Nieuwe klas starten (wis huidige klas).", () => {
-          classResetNoPass();
-          setStatus(false, "Klas gewist", "Stel een nieuwe klas in.");
-        });
-      });
-
-      $("classDrawPersona").addEventListener("click", () => classBatchDraw("persona"));
-      $("classDrawLocatie").addEventListener("click", () => classBatchDraw("locatie"));
-      $("classDrawModifier").addEventListener("click", () => classBatchDraw("modifier"));
-
-      // Class setup modal
-      $("classSetupCancel").addEventListener("click", () => closeModal("modalClassSetup"));
-      $("classSetupOk").addEventListener("click", () => {
-        const name = ($("inpClassName").value || "").trim();
-        const nRaw = $("inpGroupCount").value;
-        const n = Math.max(1, Math.min(50, Number(nRaw || 0)));
-
-        if(!name || !Number.isFinite(n) || n < 1){
-          closeModal("modalClassSetup");
-          setStatus(false, "Input ontbreekt", "Vul klasnaam en aantal groepen in.");
-          return;
-        }
-
-        createClassSession(name, n);
+      if(!name || !Number.isFinite(n) || n < 1){
         closeModal("modalClassSetup");
-        state.mode = "class";
-        saveState();
+        setStatus(false, "Input ontbreekt", "Vul klasnaam en aantal groepen in.");
+        return;
+      }
 
-        const cap = canFit(n);
-        let msg = `Klas ${name} · ${n} groepen ingesteld.`;
-        const warns = [];
-        if(!cap.personaOk) warns.push("PERSONA");
-        if(!cap.locatieOk) warns.push("LOCATIE");
-        if(!cap.modifierOk) warns.push("MODIFIER");
-        if(warns.length) msg += ` Limieten mogelijk overschreden: ${warns.join(", ")}.`;
+      createClassSession(name, n);
+      closeModal("modalClassSetup");
+      state.mode = "class";
+      saveState();
 
-        setStatus(false, "Klas ingesteld", msg);
-        render();
-      });
+      const cap = canFit(n);
+      let msg = `Klas ${name} · ${n} groepen ingesteld.`;
+      const warns = [];
+      if(!cap.personaOk) warns.push("PERSONA");
+      if(!cap.locatieOk) warns.push("LOCATIE");
+      if(!cap.modifierOk) warns.push("MODIFIER");
+      if(warns.length) msg += ` Limieten mogelijk overschreden: ${warns.join(", ")}.`;
 
-      // Password modal
-      $("passCancel").addEventListener("click", () => {
-        $("inpPass").value = "";
-        pendingPassAction = null;
-        closeModal("modalPass");
-      });
-      $("passOk").addEventListener("click", handlePasswordOk);
+      setStatus(false, "Klas ingesteld", msg);
+      render();
+    });
+  }
 
-      // Download modal
-      $("dlClose").addEventListener("click", () => closeModal("modalDownload"));$("focusClose").addEventListener("click", () => closeModal("modalGroupFocus"));
-        $("focusClose").addEventListener("click", () => closeModal("modalGroupFocus"));
+  // Password modal
+  const passCancelBtn = $("passCancel");
+  if (passCancelBtn){
+    passCancelBtn.addEventListener("click", () => {
+      const inp = $("inpPass");
+      if (inp) inp.value = "";
+      pendingPassAction = null;
+      closeModal("modalPass");
+    });
+  }
 
-      $("dlThree").addEventListener("click", async () => {
-        const picks = getContextPicks(downloadContext);
-        if(!picks) return;
+  const passOkBtn = $("passOk");
+  if (passOkBtn) passOkBtn.addEventListener("click", handlePasswordOk);
 
-        closeModal("modalDownload");
-        setBusy(true, "Download…", "PNG’s worden voorbereid.");
+  // Download modal
+  const dlCloseBtn = $("dlClose");
+  if (dlCloseBtn){
+    dlCloseBtn.addEventListener("click", () => closeModal("modalDownload"));
+  }
 
-        try{
-          const base = getContextFilenameBase(downloadContext);
-          await downloadThree(picks, base);
-          setBusy(false);
-          setStatus(true, "Download klaar", "PNG’s zijn gedownload.");
-        }catch{
-          setBusy(false);
-          setStatus(true, "Download fout", "PNG-export faalde. Gebruik http(s) en controleer de SVG-bestanden.");
-        }
-      });
+  const dlThreeBtn = $("dlThree");
+  if (dlThreeBtn){
+    dlThreeBtn.addEventListener("click", async () => {
+      const picks = getContextPicks(downloadContext);
+      if(!picks) return;
 
-      $("dlOne").addEventListener("click", async () => {
-        const picks = getContextPicks(downloadContext);
-        if(!picks) return;
+      closeModal("modalDownload");
+      setBusy(true, "Download…", "PNG’s worden voorbereid.");
 
-        closeModal("modalDownload");
-        setBusy(true, "Download…", "Gecombineerde PNG wordt voorbereid.");
+      try{
+        const base = getContextFilenameBase(downloadContext);
+        await downloadThree(picks, base);
+        setBusy(false);
+        setStatus(true, "Download klaar", "PNG’s zijn gedownload.");
+      }catch{
+        setBusy(false);
+        setStatus(true, "Download fout", "PNG-export faalde. Gebruik http(s) en controleer de SVG-bestanden.");
+      }
+    });
+  }
 
-        try{
-          const base = getContextFilenameBase(downloadContext);
-          await downloadCombined(picks, base);
-          setBusy(false);
-          setStatus(true, "Download klaar", "Gecombineerde PNG is gedownload.");
-        }catch{
-          setBusy(false);
-          setStatus(true, "Download fout", "PNG-export faalde. Gebruik http(s) en controleer de SVG-bestanden.");
-        }
-      });
+  const dlOneBtn = $("dlOne");
+  if (dlOneBtn){
+    dlOneBtn.addEventListener("click", async () => {
+      const picks = getContextPicks(downloadContext);
+      if(!picks) return;
 
-      // SEB-light hardening
-      document.addEventListener("contextmenu", (e) => e.preventDefault());
-      document.addEventListener("dragstart", (e) => e.preventDefault());
-    }
+      closeModal("modalDownload");
+      setBusy(true, "Download…", "Gecombineerde PNG wordt voorbereid.");
+
+      try{
+        const base = getContextFilenameBase(downloadContext);
+        await downloadCombined(picks, base);
+        setBusy(false);
+        setStatus(true, "Download klaar", "Gecombineerde PNG is gedownload.");
+      }catch{
+        setBusy(false);
+        setStatus(true, "Download fout", "PNG-export faalde. Gebruik http(s) en controleer de SVG-bestanden.");
+      }
+    });
+  }
+
+  // Group focus modal
+  const focusCloseBtn = $("focusClose");
+  if (focusCloseBtn){
+    focusCloseBtn.addEventListener("click", () => closeModal("modalGroupFocus"));
+  }
+
+  // SEB-light hardening
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
+  document.addEventListener("dragstart", (e) => e.preventDefault());
+}
+
 
     /* =========================
        Boot
